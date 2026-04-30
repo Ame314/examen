@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Safe Exam Browser</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #browser-view { flex-grow: 1; border: none; width: 100%; height: 100%; display: none; }
+        #start-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        h1 { color: #333; }
+        button { padding: 15px 30px; font-size: 18px; background-color: #0056b3; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #004494; }
+        
+        #exit-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+        }
+        .exit-modal {
+            background: white; padding: 30px; border-radius: 12px; text-align: center;
+        }
+        input[type="password"] { padding: 10px; font-size: 16px; margin: 10px 0; width: 80%; border: 1px solid #ccc; border-radius: 4px; }
+        .error { color: red; display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Navegador Seguro de Exámenes</h1>
+        <p>Al comenzar, la pantalla se bloqueará. No podrás salir sin la contraseña del profesor.</p>
+        <button id="start-btn">Comenzar Examen</button>
+    </div>
+
+    <!-- We use an iframe to load the exam URL so we keep our exit overlay available -->
+    <iframe id="browser-view" src=""></iframe>
+
+    <div id="exit-overlay">
+        <div class="exit-modal">
+            <h2>Salir del Examen</h2>
+            <p>Introduce la contraseña para salir (por defecto: 1234):</p>
+            <input type="password" id="exit-password" placeholder="Contraseña">
+            <br>
+            <button id="confirm-exit">Salir</button>
+            <button id="cancel-exit" style="background-color: #666; margin-left: 10px;">Cancelar</button>
+            <div id="exit-error" class="error">Contraseña incorrecta</div>
+        </div>
+    </div>
+
+    <script>
+        const startScreen = document.getElementById('start-screen');
+        const browserView = document.getElementById('browser-view');
+        const startBtn = document.getElementById('start-btn');
+        
+        const exitOverlay = document.getElementById('exit-overlay');
+        const confirmExitBtn = document.getElementById('confirm-exit');
+        const cancelExitBtn = document.getElementById('cancel-exit');
+        const exitPassword = document.getElementById('exit-password');
+        const exitError = document.getElementById('exit-error');
+
+        // Start exam
+        startBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            browserView.style.display = 'block';
+            browserView.src = 'exam.html'; // Cargamos el examen local de ejemplo
+        });
+
+        // Define a function to show the dialog
+        window.showExitDialog = () => {
+            exitOverlay.style.display = 'flex';
+            exitPassword.value = '';
+            exitError.style.display = 'none';
+            exitPassword.focus();
+        };
+
+        // Exit dialog trigger from main process
+        window.electronAPI.onShowExitDialog(window.showExitDialog);
+
+        // Cancel exit
+        cancelExitBtn.addEventListener('click', () => {
+            exitOverlay.style.display = 'none';
+        });
+
+        // Confirm exit
+        confirmExitBtn.addEventListener('click', async () => {
+            const pwd = exitPassword.value;
+            const success = await window.electronAPI.verifyExit(pwd);
+            if (!success) {
+                exitError.style.display = 'block';
+            }
+        });
+
+        // Also allow pressing enter
+        exitPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmExitBtn.click();
+            }
+        });
+
+        // Disable right click globally
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Block copy paste events in the wrapper
+        document.addEventListener('copy', event => event.preventDefault());
+        document.addEventListener('cut', event => event.preventDefault());
+        // We might want to allow paste inside the iframe though.
+    </script>
+</body>
+</html>
