@@ -1,6 +1,10 @@
 const { app, BrowserWindow, globalShortcut, ipcMain } = require('electron');
 const path = require('path');
 
+// Disable swipe back/forward navigation and pinch to zoom
+app.commandLine.appendSwitch('disable-pinch');
+app.commandLine.appendSwitch('overscroll-history-navigation=0');
+
 let mainWindow;
 
 function createWindow() {
@@ -10,12 +14,17 @@ function createWindow() {
     kiosk: true, // Full screen and non-exitable by normal means
     alwaysOnTop: true,
     fullscreen: true,
+    skipTaskbar: true,
+    type: 'screen-saver', // Helps on some Linux environments to stay on top
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     }
   });
+
+  // Force highest level of always-on-top
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
 
   // Disable default menu
   mainWindow.setMenu(null);
@@ -44,6 +53,16 @@ function createWindow() {
       // Send a message to the renderer to show the exit dialog
       mainWindow.webContents.send('show-exit-dialog');
     }
+  });
+
+  // Aggressively prevent losing focus (e.g., from touchpad gestures changing workspaces)
+  mainWindow.on('blur', () => {
+    mainWindow.focus();
+  });
+
+  // Prevent leaving full screen mode
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.setFullScreen(true);
   });
 }
 
