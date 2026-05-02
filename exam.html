@@ -20,8 +20,8 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #0056b3;
-            border-bottom: 2px solid #0056b3;
+            color: #7b2cbf;
+            border-bottom: 2px solid #7b2cbf;
             padding-bottom: 10px;
         }
         .question {
@@ -48,14 +48,14 @@
             margin-top: 40px;
             padding: 15px 30px;
             font-size: 18px;
-            background-color: #28a745;
+            background-color: #7b2cbf;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
         }
         .submit-btn:hover {
-            background-color: #218838;
+            background-color: #5a189a;
         }
     </style>
 </head>
@@ -65,27 +65,8 @@
         <p>Por favor, responde a las siguientes preguntas. Recuerda que estás en un entorno seguro.</p>
 
         <form id="exam-form">
-            <div class="question">
-                <h3>1. ¿En qué año llegó Cristóbal Colón a América?</h3>
-                <ul class="options">
-                    <li><label><input type="radio" name="q1" value="a"> 1492</label></li>
-                    <li><label><input type="radio" name="q1" value="b"> 1500</label></li>
-                    <li><label><input type="radio" name="q1" value="c"> 1400</label></li>
-                </ul>
-            </div>
-
-            <div class="question">
-                <h3>2. ¿Cuál es el río más largo del mundo?</h3>
-                <ul class="options">
-                    <li><label><input type="radio" name="q2" value="a"> Nilo</label></li>
-                    <li><label><input type="radio" name="q2" value="b"> Amazonas</label></li>
-                    <li><label><input type="radio" name="q2" value="c"> Yangtsé</label></li>
-                </ul>
-            </div>
-
-            <div class="question">
-                <h3>3. ¿Escribe un breve ensayo sobre la Revolución Francesa? (Intenta pegar texto aquí)</h3>
-                <textarea rows="5" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit;"></textarea>
+            <div id="questions-container">
+                <!-- Preguntas cargadas dinámicamente -->
             </div>
 
             <button type="button" class="submit-btn" onclick="finishExam()">Finalizar y Salir</button>
@@ -93,12 +74,71 @@
     </div>
 
     <script>
-        function finishExam() {
-            alert("Examen enviado con éxito.");
+        let db = null;
+        // electronAPI vive en el parent (index.html), no en el iframe
+        const api = window.parent.electronAPI;
+        let studentName = window.parent.sessionStorage.getItem('studentName') || 'Estudiante Anónimo';
+
+        async function loadExam() {
+            db = await api.getDB();
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            if(!db.questions) db.questions = [];
+            
+            db.questions.forEach((q, index) => {
+                container.innerHTML += `
+                <div class="question">
+                    <h3>${index + 1}. ${q.text}</h3>
+                    <ul class="options">
+                        <li><label><input type="radio" name="q${q.id}" value="a"> ${q.options.a}</label></li>
+                        <li><label><input type="radio" name="q${q.id}" value="b"> ${q.options.b}</label></li>
+                        <li><label><input type="radio" name="q${q.id}" value="c"> ${q.options.c}</label></li>
+                    </ul>
+                </div>
+                `;
+            });
+            
+            // Add essay
+            container.innerHTML += `
+            <div class="question">
+                <h3>Ensayo: Escribe un breve ensayo final.</h3>
+                <textarea name="essay" rows="5" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit;"></textarea>
+            </div>
+            `;
+        }
+
+        async function finishExam() {
+            const form = document.getElementById('exam-form');
+            let score = 0;
+            
+            db.questions.forEach(q => {
+                const answer = form.elements[`q${q.id}`]?.value;
+                if (answer === q.correct) {
+                    score += q.points;
+                }
+            });
+            
+            const essay = form.elements['essay']?.value || '';
+            
+            // Save to DB
+            const studentData = {
+                name: studentName,
+                score: score,
+                essay: essay,
+                completedAt: new Date().toISOString()
+            };
+            
+            await api.saveStudent(studentData);
+
+            alert(`Examen enviado con éxito.\n\nAlumno: ${studentName}\nTu calificación (opción múltiple): ${score} puntos.\n(El ensayo será calificado manualmente por el profesor).`);
+            
             if (window.parent && window.parent.showExitDialog) {
                 window.parent.showExitDialog();
             }
         }
+
+        loadExam();
         // Bloquear copiar y pegar en este frame también
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('copy', event => event.preventDefault());
