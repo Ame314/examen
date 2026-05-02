@@ -1,85 +1,323 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <title>Safe Exam Browser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Navegador Seguro de Exámenes - Sistema de evaluación en línea accesible">
+    <title>Navegador Seguro de Exámenes</title>
+    <link rel="stylesheet" href="styles/design-system.css">
     <style>
-        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #browser-view { flex-grow: 1; border: none; width: 100%; height: 100%; display: none; }
-        #start-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
-        button { padding: 15px 30px; font-size: 18px; background-color: #7b2cbf; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #5a189a; }
-        
-        #exit-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999;
+        /* ─── Layout Principal ─────────────────────── */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        .exit-modal {
-            background: white; padding: 30px; border-radius: 12px; text-align: center;
+
+        #browser-view {
+            flex-grow: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+            display: none;
         }
-        input[type="password"] { padding: 10px; font-size: 16px; margin: 10px 0; width: 80%; border: 1px solid #ccc; border-radius: 4px; }
-        .error { color: red; display: none; margin-top: 10px; }
+
+        /* ─── Pantalla de Login ────────────────────── */
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: linear-gradient(145deg, hsl(270, 60%, 12%) 0%, hsl(250, 50%, 22%) 50%, hsl(270, 55%, 18%) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decoración de fondo */
+        #start-screen::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, hsla(270, 60%, 50%, 0.15) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            pointer-events: none;
+        }
+
+        #start-screen::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, hsla(200, 80%, 50%, 0.1) 0%, transparent 70%);
+            bottom: -100px;
+            left: -100px;
+            pointer-events: none;
+        }
+
+        /* ─── Login Card (Glassmorphism) ───────────── */
+        .login-card {
+            position: relative;
+            z-index: 1;
+            background: hsla(0, 0%, 100%, 0.07);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid hsla(0, 0%, 100%, 0.12);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl) var(--space-2xl);
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px hsla(270, 50%, 10%, 0.5);
+            animation: slideUp var(--transition-spring) ease-out;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .login-card h1 {
+            color: var(--text-inverse);
+            font-size: var(--text-2xl);
+            text-align: center;
+            margin-bottom: var(--space-xs);
+        }
+
+        .login-subtitle {
+            color: hsla(0, 0%, 100%, 0.6);
+            font-size: var(--text-sm);
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+
+        .login-card .form-label {
+            color: hsla(0, 0%, 100%, 0.8);
+        }
+
+        .login-card .form-input {
+            background: hsla(0, 0%, 100%, 0.08);
+            border-color: hsla(0, 0%, 100%, 0.15);
+            color: var(--text-inverse);
+        }
+
+        .login-card .form-input::placeholder {
+            color: hsla(0, 0%, 100%, 0.35);
+        }
+
+        .login-card .form-input:hover {
+            border-color: hsla(0, 0%, 100%, 0.3);
+        }
+
+        .login-card .form-input:focus {
+            border-color: var(--primary-400);
+            background: hsla(0, 0%, 100%, 0.12);
+            box-shadow: 0 0 0 3px hsla(270, 60%, 50%, 0.3);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: var(--space-md);
+            font-size: var(--text-base);
+            margin-top: var(--space-md);
+        }
+
+        .login-error {
+            display: none;
+            margin-top: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            background: hsla(0, 70%, 50%, 0.15);
+            border: 1px solid hsla(0, 70%, 50%, 0.3);
+            border-radius: var(--radius-md);
+            color: hsl(0, 80%, 75%);
+            font-size: var(--text-sm);
+            text-align: center;
+        }
+
+        .login-error .error-icon {
+            margin-right: var(--space-xs);
+        }
+
+        /* ─── Alert Overlay (Foco Perdido) ─────────── */
+        #alert-overlay {
+            position: fixed;
+            inset: 0;
+            background: hsla(0, 70%, 40%, 0.95);
+            backdrop-filter: blur(8px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            color: white;
+            text-align: center;
+            padding: var(--space-2xl);
+        }
+
+        .alert-icon-large {
+            font-size: 5rem;
+            margin-bottom: var(--space-lg);
+            animation: pulse 1.5s infinite;
+        }
+
+        #alert-overlay h1 {
+            color: white;
+            font-size: var(--text-4xl);
+            margin-bottom: var(--space-md);
+        }
+
+        #alert-message {
+            font-size: var(--text-xl);
+            max-width: 600px;
+            line-height: 1.5;
+            color: hsla(0, 0%, 100%, 0.9);
+        }
     </style>
 </head>
+
 <body>
+    <!-- Skip Link para accesibilidad por teclado -->
+    <a href="#main-content" class="skip-link" id="skip-link">Saltar al contenido principal</a>
 
-    <div id="start-screen">
-        <h1>Navegador Seguro de Exámenes</h1>
-        <p>Ingresa tus datos para continuar.</p>
-        <input type="text" id="login-name" placeholder="Tu Nombre y Apellido" style="padding: 10px; font-size: 16px; margin: 5px 0; width: 300px; border: 1px solid #ccc; border-radius: 4px;">
-        <input type="password" id="login-password" placeholder="Contraseña de Acceso" style="padding: 10px; font-size: 16px; margin: 10px 0; width: 300px; border: 1px solid #ccc; border-radius: 4px;">
-        <button id="start-btn" style="margin-top: 15px;">Entrar</button>
-        <div id="login-error" class="error">Contraseña incorrecta</div>
-    </div>
+    <!-- ═══ PANTALLA DE LOGIN ═══ -->
+    <main id="start-screen" role="main" aria-label="Pantalla de inicio de sesión">
+        <div class="login-card" id="main-content">
+            <div class="login-logo" aria-hidden="true">🎓</div>
+            <h1>Navegador Seguro</h1>
+            <p class="login-subtitle">Ingresa tus datos para acceder al examen</p>
 
-    <!-- We use an iframe to load the exam URL so we keep our exit overlay available -->
-    <iframe id="browser-view" src=""></iframe>
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="login-name" class="form-label">
+                        Nombre completo <span class="required" aria-label="campo obligatorio">*</span>
+                    </label>
+                    <input type="text" id="login-name" class="form-input" placeholder="Ej: María García López" required
+                        autocomplete="name" aria-required="true" aria-describedby="name-hint">
+                    <span class="form-hint" id="name-hint">Escribe tu nombre y apellido completos</span>
+                </div>
 
-    <div id="exit-overlay">
-        <div class="exit-modal">
-            <h2>Salir del Examen</h2>
-            <p>Introduce la contraseña para salir (por defecto: 1234):</p>
-            <input type="password" id="exit-password" placeholder="Contraseña">
-            <br>
-            <button id="confirm-exit">Salir</button>
-            <button id="cancel-exit" style="background-color: #666; margin-left: 10px;">Cancelar</button>
-            <div id="exit-error" class="error">Contraseña incorrecta</div>
+                <div class="form-group">
+                    <label for="login-password" class="form-label">
+                        Contraseña de acceso <span class="required" aria-label="campo obligatorio">*</span>
+                    </label>
+                    <input type="password" id="login-password" class="form-input"
+                        placeholder="Ingresa la contraseña proporcionada" required aria-required="true"
+                        aria-describedby="pwd-hint">
+                    <span class="form-hint" id="pwd-hint">Contraseña proporcionada por tu profesor</span>
+                </div>
+
+                <button type="submit" class="btn btn--primary login-btn" id="start-btn"
+                    aria-label="Ingresar al sistema de examen">
+                    <span class="btn-icon" aria-hidden="true">🔐</span>
+                    Ingresar
+                </button>
+            </form>
+
+            <div class="login-error" id="login-error" role="alert" aria-live="assertive" aria-atomic="true">
+                <span class="error-icon" aria-hidden="true">⚠️</span>
+                <span id="login-error-text">Contraseña incorrecta</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══ IFRAME DEL EXAMEN/ADMIN ═══ -->
+    <iframe id="browser-view" src="" title="Contenido del examen" aria-label="Área de examen"></iframe>
+
+    <!-- ═══ MODAL DE SALIDA ═══ -->
+    <div id="exit-overlay" class="overlay" style="display: none;" role="dialog" aria-modal="true"
+        aria-labelledby="exit-title">
+        <div class="modal">
+            <div style="font-size: 2.5rem; margin-bottom: var(--space-md);" aria-hidden="true">🔒</div>
+            <h2 id="exit-title">Salir del Examen</h2>
+            <p>Introduce la contraseña del profesor para salir del sistema</p>
+
+            <div class="form-group" style="text-align: left;">
+                <label for="exit-password" class="form-label">Contraseña de salida</label>
+                <input type="password" id="exit-password" class="form-input" placeholder="Contraseña del profesor"
+                    aria-describedby="exit-hint">
+                <span class="form-hint" id="exit-hint">Solicita la contraseña a tu profesor</span>
+            </div>
+
+            <div class="flex gap-sm" style="margin-top: var(--space-lg);">
+                <button id="confirm-exit" class="btn btn--primary" style="flex:1;"
+                    aria-label="Confirmar salida del sistema">
+                    <span class="btn-icon" aria-hidden="true">✓</span> Salir
+                </button>
+                <button id="cancel-exit" class="btn btn--secondary" style="flex:1;"
+                    aria-label="Cancelar y volver al examen">
+                    <span class="btn-icon" aria-hidden="true">✕</span> Cancelar
+                </button>
+            </div>
+
+            <div id="exit-error" class="form-error"
+                style="display: none; justify-content: center; margin-top: var(--space-md);" role="alert"
+                aria-live="assertive">
+                Contraseña incorrecta. Intenta de nuevo.
+            </div>
         </div>
     </div>
 
-    <!-- Alert Overlay for Focus Loss -->
-    <div id="alert-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(220, 53, 69, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; color: white; text-align: center; padding: 20px;">
-        <h1 style="font-size: 3em; margin-bottom: 20px; font-weight: bold;">¡ADVERTENCIA!</h1>
-        <h2 id="alert-message" style="font-size: 2em; max-width: 80%;"></h2>
+    <!-- ═══ ALERTA DE FOCO PERDIDO ═══ -->
+    <div id="alert-overlay" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="alert-icon-large" aria-hidden="true">⚠️</div>
+        <h1>¡ADVERTENCIA!</h1>
+        <p id="alert-message"></p>
     </div>
 
     <script>
+        // ─── Referencias DOM ──────────────────────────
         const startScreen = document.getElementById('start-screen');
         const browserView = document.getElementById('browser-view');
-        const startBtn = document.getElementById('start-btn');
+        const loginForm = document.getElementById('login-form');
         const loginName = document.getElementById('login-name');
         const loginPassword = document.getElementById('login-password');
         const loginError = document.getElementById('login-error');
-        
+        const loginErrorText = document.getElementById('login-error-text');
+
         const exitOverlay = document.getElementById('exit-overlay');
         const confirmExitBtn = document.getElementById('confirm-exit');
         const cancelExitBtn = document.getElementById('cancel-exit');
         const exitPassword = document.getElementById('exit-password');
         const exitError = document.getElementById('exit-error');
 
-        // Start exam
-        startBtn.addEventListener('click', () => {
+        const alertOverlay = document.getElementById('alert-overlay');
+        const alertMessage = document.getElementById('alert-message');
+
+        // ─── Mostrar error accesible ──────────────────
+        function showLoginError(message) {
+            loginErrorText.textContent = message;
+            loginError.style.display = 'block';
+            loginError.classList.add('animate-shake');
+            setTimeout(() => loginError.classList.remove('animate-shake'), 500);
+        }
+
+        function hideLoginError() {
+            loginError.style.display = 'none';
+        }
+
+        // ─── Login con formulario (Enter funciona) ────
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            hideLoginError();
+
             const pwd = loginPassword.value;
             const name = loginName.value.trim();
 
+            if (!name) {
+                showLoginError('Por favor ingresa tu nombre completo.');
+                loginName.focus();
+                return;
+            }
+
             if (pwd === '1234') {
-                if (!name) {
-                    loginError.textContent = "Por favor ingresa tu nombre.";
-                    loginError.style.display = 'block';
-                    return;
-                }
-                // Guardamos el nombre en sessionStorage para que el iframe pueda accederlo
                 sessionStorage.setItem('studentName', name);
                 startScreen.style.display = 'none';
                 browserView.style.display = 'block';
@@ -89,12 +327,13 @@
                 browserView.style.display = 'block';
                 browserView.src = 'admin.html?t=' + Date.now();
             } else {
-                loginError.textContent = "Contraseña incorrecta";
-                loginError.style.display = 'block';
+                showLoginError('Contraseña incorrecta. Verifica con tu profesor.');
+                loginPassword.focus();
+                loginPassword.select();
             }
         });
 
-        // Define a function to show the dialog
+        // ─── Modal de salida ──────────────────────────
         window.showExitDialog = () => {
             exitOverlay.style.display = 'flex';
             exitPassword.value = '';
@@ -102,34 +341,35 @@
             exitPassword.focus();
         };
 
-        // Exit dialog trigger from main process
         window.electronAPI.onShowExitDialog(window.showExitDialog);
 
-        // Cancel exit
         cancelExitBtn.addEventListener('click', () => {
             exitOverlay.style.display = 'none';
         });
 
-        // Confirm exit
         confirmExitBtn.addEventListener('click', async () => {
             const pwd = exitPassword.value;
             const success = await window.electronAPI.verifyExit(pwd);
             if (!success) {
-                exitError.style.display = 'block';
+                exitError.style.display = 'flex';
+                exitPassword.focus();
+                exitPassword.select();
             }
         });
 
-        // Also allow pressing enter
+        // Enter para confirmar salida
         exitPassword.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                confirmExitBtn.click();
+            if (e.key === 'Enter') confirmExitBtn.click();
+        });
+
+        // Escape para cancelar modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && exitOverlay.style.display === 'flex') {
+                exitOverlay.style.display = 'none';
             }
         });
 
-        // Listen for alerts from main process
-        const alertOverlay = document.getElementById('alert-overlay');
-        const alertMessage = document.getElementById('alert-message');
-        
+        // ─── Alertas de foco perdido ──────────────────
         window.electronAPI.onShowAlert((message) => {
             if (message) {
                 alertMessage.textContent = message;
@@ -139,13 +379,11 @@
             }
         });
 
-        // Disable right click globally
-        document.addEventListener('contextmenu', event => event.preventDefault());
-
-        // Block copy paste events in the wrapper
-        document.addEventListener('copy', event => event.preventDefault());
-        document.addEventListener('cut', event => event.preventDefault());
-        // We might want to allow paste inside the iframe though.
+        // ─── Seguridad del renderer ───────────────────
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
     </script>
 </body>
+
 </html>

@@ -1,193 +1,196 @@
+/**
+ * Proceso Principal (main.js) — Orquestador MVC
+ * 
+ * Este archivo actúa como el punto de entrada de la aplicación Electron.
+ * Delega la lógica de negocio a los Controladores y la persistencia al Modelo.
+ * Solo se encarga de:
+ *   - Configurar la ventana Electron (kiosk, seguridad)
+ *   - Registrar IPC handlers que conectan Vista ↔ Controlador
+ *   - Manejar atajos globales y seguridad del sistema
+ */
+
 const { app, BrowserWindow, globalShortcut, ipcMain, clipboard } = require('electron');
 const path = require('path');
-const fs = require('fs');
+
+// ─── Importar capas MVC ──────────────────────────────────────
+const Database = require('./models/Database');
+const ExamController = require('./controllers/ExamController');
+const AuthController = require('./controllers/AuthController');
+
+// ─── Instanciar capas ────────────────────────────────────────
+const db = new Database(app.getPath('userData'));
+const examController = new ExamController(db);
+const authController = new AuthController();
 
 let blurTimeout = null;
+let mainWindow;
 
-const dbPath = path.join(app.getPath('userData'), 'database.json');
+// ═══════════════════════════════════════════════════════════════
+// IPC HANDLERS — Conectan la Vista con los Controladores
+// ═══════════════════════════════════════════════════════════════
 
-function readDB() {
-    try {
-        if (fs.existsSync(dbPath)) {
-            return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-        }
-    } catch(e) { console.error('Error leyendo BDD', e); }
-    
-    // Base de datos por defecto
-    return {
-        questions: [
-            { id: 1, text: '¿En qué año llegó Cristóbal Colón a América?', options: { a: '1492', b: '1500', c: '1400' }, correct: 'a', points: 5 },
-            { id: 2, text: '¿Cuál es el río más largo del mundo?', options: { a: 'Nilo', b: 'Amazonas', c: 'Yangtsé' }, correct: 'b', points: 5 }
-        ],
-        students: [], 
-        logs: []
-    };
-}
+// Obtener todos los datos (Vista necesita poblar las pantallas)
+ipcMain.handle('db-get', () => examController.getAllData());
 
-function writeDB(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
-
-// Handlers para la BDD Local
-ipcMain.handle('db-get', () => readDB());
-
+// Añadir pregunta (delegado al ExamController con validación)
 ipcMain.handle('add-question', (event, question) => {
-    const db = readDB();
-    if (!db.questions) db.questions = [];
-    question.id = Date.now(); // Usar timestamp para ID único
-    db.questions.push(question);
-    writeDB(db);
-    return true;
+    return examController.addQuestion(question);
 });
 
+// Guardar resultado de estudiante
 ipcMain.handle('save-student', (event, student) => {
-    const db = readDB();
-    if (!db.students) db.students = [];
-    db.students.push(student);
-    writeDB(db);
+    db.saveStudent(student);
     return true;
 });
 
-async function guardarEnBDD(tipoEvento, detalle) {
-  const timestamp = new Date().toISOString();
-  const db = readDB();
-  if (!db.logs) db.logs = [];
-  db.logs.push({ timestamp, tipoEvento, detalle });
-  writeDB(db);
-  console.log(`[BDD Local] Guardado en Base de Datos -> ${tipoEvento}: ${detalle}`);
+// Calificar examen completo
+ipcMain.handle('grade-exam', (event, { studentName, answers, essay }) => {
+    return examController.gradeExam(studentName, answers, essay);
+});
+
+// Verificar contraseña de salida (delegado al AuthController)
+ipcMain.handle('verify-exit', (event, password) => {
+    if (authController.verifyExit(password)) {
+        app.isQuitting = true;
+        app.quit();
+        return true;
+    }
+    return false;
+});
+
+// Registrar log de actividad
+ipcMain.handle('add-log', (event, { eventType, detail }) => {
+    return db.addLog(eventType, detail);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// UTILIDADES
+// ═══════════════════════════════════════════════════════════════
+
+function guardarEnBDD(tipoEvento, detalle) {
+    db.addLog(tipoEvento, detalle);
 }
+
 // Disable swipe back/forward navigation and pinch to zoom
 app.commandLine.appendSwitch('disable-pinch');
 app.commandLine.appendSwitch('overscroll-history-navigation=0');
 
-let mainWindow;
+// ═══════════════════════════════════════════════════════════════
+// VENTANA PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    kiosk: true, // Full screen and non-exitable by normal means
-    alwaysOnTop: true,
-    fullscreen: true,
-    skipTaskbar: true,
-    type: 'screen-saver', // Helps on some Linux environments to stay on top
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
-    }
-  });
+    mainWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        kiosk: true,
+        alwaysOnTop: true,
+        fullscreen: true,
+        skipTaskbar: true,
+        type: 'screen-saver',
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
+        }
+    });
 
-  // Force highest level of always-on-top
-  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    // Force highest level of always-on-top
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
 
-  // Disable default menu
-  mainWindow.setMenu(null);
+    // Disable default menu
+    mainWindow.setMenu(null);
 
-  // Block Developer Tools
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.control && input.shift && input.key.toLowerCase() === 'i') {
-      event.preventDefault();
-    }
-    if (input.key === 'F12') {
-      event.preventDefault();
-    }
-    // Try to block Ctrl+W / Cmd+W
-    if ((input.control || input.meta) && input.key.toLowerCase() === 'w') {
-        event.preventDefault();
-    }
-    // Block Copy and Paste (Ctrl+C, Ctrl+V, Cmd+C, Cmd+V, Ctrl+X)
-    if ((input.control || input.meta) && (input.key.toLowerCase() === 'c' || input.key.toLowerCase() === 'v' || input.key.toLowerCase() === 'x')) {
-        event.preventDefault();
-        clipboard.clear(); // Clear clipboard to prevent any OS-level paste leak
-    }
-  });
+    // Block Developer Tools and unsafe shortcuts
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && input.shift && input.key.toLowerCase() === 'i') {
+            event.preventDefault();
+        }
+        if (input.key === 'F12') {
+            event.preventDefault();
+        }
+        if ((input.control || input.meta) && input.key.toLowerCase() === 'w') {
+            event.preventDefault();
+        }
+        if ((input.control || input.meta) && ['c', 'v', 'x'].includes(input.key.toLowerCase())) {
+            event.preventDefault();
+            clipboard.clear();
+        }
+    });
 
-  // Track navigation history
-  mainWindow.webContents.on('did-navigate', (event, url) => {
-    guardarEnBDD('NAVEGACION', `El usuario navegó a: ${url}`);
-  });
+    // Track navigation history
+    mainWindow.webContents.on('did-navigate', (event, url) => {
+        guardarEnBDD('NAVEGACION', `El usuario navegó a: ${url}`);
+    });
 
-  mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
-    guardarEnBDD('NAVEGACION_INTERNA', `El usuario navegó internamente a: ${url}`);
-  });
+    mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
+        guardarEnBDD('NAVEGACION_INTERNA', `El usuario navegó internamente a: ${url}`);
+    });
 
-  // Load the initial file
-  mainWindow.loadFile('index.html');
+    // Load the initial file
+    mainWindow.loadFile('index.html');
 
-  // Prevent closing the window easily
-  mainWindow.on('close', (e) => {
-    if (!app.isQuitting) {
-      e.preventDefault();
-      // Send a message to the renderer to show the exit dialog
-      mainWindow.webContents.send('show-exit-dialog');
-    }
-  });
+    // Prevent closing the window easily
+    mainWindow.on('close', (e) => {
+        if (!app.isQuitting) {
+            e.preventDefault();
+            mainWindow.webContents.send('show-exit-dialog');
+        }
+    });
 
-  // Aggressively prevent losing focus
-  mainWindow.on('blur', () => {
-    clipboard.clear(); // Clear clipboard when losing focus just in case
-    guardarEnBDD('FOCO_PERDIDO', 'El alumno salió de la pantalla del examen.');
-    
-    // Show visual warning in the UI
-    mainWindow.webContents.send('show-alert', '¡Has salido del examen! Tienes 5 segundos para volver a esta pantalla o el examen se cancelará automáticamente.');
+    // Aggressively prevent losing focus
+    mainWindow.on('blur', () => {
+        clipboard.clear();
+        guardarEnBDD('FOCO_PERDIDO', 'El alumno salió de la pantalla del examen.');
 
-    // Start 5-second countdown to cancel exam
-    blurTimeout = setTimeout(() => {
-      guardarEnBDD('FRAUDE_DETECTADO', 'El alumno estuvo fuera de la pantalla por más de 5 segundos. Examen cancelado.');
-      mainWindow.webContents.send('show-alert', 'FRAUDE DETECTADO. Examen Cancelado.');
-      
-      // Delay quit slightly to let them see the message
-      setTimeout(() => {
-        app.isQuitting = true;
-        app.quit();
-      }, 2000);
-    }, 5000);
-  });
+        mainWindow.webContents.send('show-alert', '¡Has salido del examen! Tienes 5 segundos para volver a esta pantalla o el examen se cancelará automáticamente.');
 
-  // Cancel the timeout if they return in time
-  mainWindow.on('focus', () => {
-    if (blurTimeout) {
-      clearTimeout(blurTimeout);
-      blurTimeout = null;
-      guardarEnBDD('FOCO_RECUPERADO', 'El alumno regresó al examen a tiempo.');
-      
-      // Hide the visual warning
-      mainWindow.webContents.send('show-alert', null);
-    }
-  });
+        blurTimeout = setTimeout(() => {
+            guardarEnBDD('FRAUDE_DETECTADO', 'El alumno estuvo fuera de la pantalla por más de 5 segundos. Examen cancelado.');
+            mainWindow.webContents.send('show-alert', 'FRAUDE DETECTADO. Examen Cancelado.');
 
-  // Prevent leaving full screen mode
-  mainWindow.on('leave-full-screen', () => {
-    mainWindow.setFullScreen(true);
-  });
+            setTimeout(() => {
+                app.isQuitting = true;
+                app.quit();
+            }, 2000);
+        }, 5000);
+    });
+
+    // Cancel the timeout if they return in time
+    mainWindow.on('focus', () => {
+        if (blurTimeout) {
+            clearTimeout(blurTimeout);
+            blurTimeout = null;
+            guardarEnBDD('FOCO_RECUPERADO', 'El alumno regresó al examen a tiempo.');
+            mainWindow.webContents.send('show-alert', null);
+        }
+    });
+
+    // Prevent leaving full screen mode
+    mainWindow.on('leave-full-screen', () => {
+        mainWindow.setFullScreen(true);
+    });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// CICLO DE VIDA DE LA APP
+// ═══════════════════════════════════════════════════════════════
+
 app.whenReady().then(() => {
-  createWindow();
+    createWindow();
 
-  // Block common OS shortcuts if possible (Global shortcuts)
-  globalShortcut.register('CommandOrControl+Tab', () => {});
-  globalShortcut.register('Alt+Tab', () => {});
-  globalShortcut.register('CommandOrControl+W', () => {});
-  globalShortcut.register('CommandOrControl+R', () => {});
-  globalShortcut.register('F5', () => {});
+    // Block common OS shortcuts
+    globalShortcut.register('CommandOrControl+Tab', () => {});
+    globalShortcut.register('Alt+Tab', () => {});
+    globalShortcut.register('CommandOrControl+W', () => {});
+    globalShortcut.register('CommandOrControl+R', () => {});
+    globalShortcut.register('F5', () => {});
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
 });
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
-
-// IPC Handler to verify password and exit
-ipcMain.handle('verify-exit', (event, password) => {
-  if (password === '1234') { // Default password
-    app.isQuitting = true;
-    app.quit();
-    return true;
-  }
-  return false;
+    globalShortcut.unregisterAll();
 });
