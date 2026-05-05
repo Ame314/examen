@@ -12,5 +12,9 @@
   "type": "commonjs",
   "devDependencies": {
     "electron": "^41.3.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "firebase": "^12.12.1"
   }
 }

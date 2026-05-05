@@ -73,27 +73,46 @@
         </form>
     </div>
 
-    <script>
+    <script type="module">
+        import { getDBWeb, saveStudentWeb } from './firebase-web.js';
+
         let db = null;
         // electronAPI vive en el parent (index.html), no en el iframe
         const api = window.parent.electronAPI;
-        let studentName = window.parent.sessionStorage.getItem('studentName') || 'Estudiante Anónimo';
+        
+        // Corregido: Obtenemos el nombre por URL para evitar el problema con sessionStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        let studentName = urlParams.get('name') || window.parent.sessionStorage?.getItem('studentName') || 'Estudiante Anónimo';
 
         async function loadExam() {
-            db = await api.getDB();
+            if (api) {
+                db = await api.getDB();
+            } else {
+                // Modo web: conexión directa a Firebase
+                db = await getDBWeb();
+            }
+
             const container = document.getElementById('questions-container');
             container.innerHTML = '';
             
             if(!db.questions) db.questions = [];
             
             db.questions.forEach((q, index) => {
+                let optionsHtml = '';
+                if (q.options) {
+                    for (const [key, value] of Object.entries(q.options)) {
+                        optionsHtml += `<li><label><input type="radio" name="q${q.id}" value="${key}"> ${value}</label></li>`;
+                    }
+                } else {
+                    optionsHtml = `<li><label><input type="radio" name="q${q.id}" value="a"> Verdadero</label></li>
+                                   <li><label><input type="radio" name="q${q.id}" value="b"> Falso</label></li>`;
+                }
+
                 container.innerHTML += `
                 <div class="question">
                     <h3>${index + 1}. ${q.text}</h3>
                     <ul class="options">
-                        <li><label><input type="radio" name="q${q.id}" value="a"> ${q.options.a}</label></li>
-                        <li><label><input type="radio" name="q${q.id}" value="b"> ${q.options.b}</label></li>
-                        <li><label><input type="radio" name="q${q.id}" value="c"> ${q.options.c}</label></li>
+                        ${optionsHtml}
                     </ul>
                 </div>
                 `;
@@ -129,14 +148,24 @@
                 completedAt: new Date().toISOString()
             };
             
-            await api.saveStudent(studentData);
+            if (api) {
+                await api.saveStudent(studentData);
+            } else {
+                await saveStudentWeb(studentData);
+                console.log("Modo web: estudiante guardado en Firebase", studentData);
+            }
 
             alert(`Examen enviado con éxito.\n\nAlumno: ${studentName}\nTu calificación (opción múltiple): ${score} puntos.\n(El ensayo será calificado manualmente por el profesor).`);
             
             if (window.parent && window.parent.showExitDialog) {
                 window.parent.showExitDialog();
+            } else {
+                alert("Modo web: el examen ha finalizado.");
             }
         }
+
+        // Exponer función al entorno global para el botón HTML
+        window.finishExam = finishExam;
 
         loadExam();
         // Bloquear copiar y pegar en este frame también

@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Examen
     gradeExam: (data) => ipcRenderer.invoke('grade-exam', data),
 
-    // Logs
+    // Logs y Seguimiento
+    setStudentName: (name) => ipcRenderer.send('set-student-name', name),
     addLog: (eventType, detail) => ipcRenderer.invoke('add-log', { eventType, detail })
 });

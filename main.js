@@ -9,6 +9,7 @@
  *   - Manejar atajos globales y seguridad del sistema
  */
 
+require('dotenv').config();
 const { app, BrowserWindow, globalShortcut, ipcMain, clipboard } = require('electron');
 const path = require('path');
 
@@ -18,7 +19,7 @@ const ExamController = require('./controllers/ExamController');
 const AuthController = require('./controllers/AuthController');
 
 // ─── Instanciar capas ────────────────────────────────────────
-const db = new Database(app.getPath('userData'));
+const db = new Database();
 const examController = new ExamController(db);
 const authController = new AuthController();
 
@@ -67,8 +68,14 @@ ipcMain.handle('add-log', (event, { eventType, detail }) => {
 // UTILIDADES
 // ═══════════════════════════════════════════════════════════════
 
+let currentStudentName = 'Estudiante Anónimo';
+
+ipcMain.on('set-student-name', (event, name) => {
+    currentStudentName = name;
+});
+
 function guardarEnBDD(tipoEvento, detalle) {
-    db.addLog(tipoEvento, detalle);
+    db.addLog(tipoEvento, `[${currentStudentName}] ${detalle}`);
 }
 
 // Disable swipe back/forward navigation and pinch to zoom

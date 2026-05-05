@@ -3,161 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel del Profesor</title>
+    <link rel="stylesheet" href="styles/design-system.css">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+            padding: var(--space-xl);
+            background-color: var(--bg-base);
         }
-        .header {
+        .admin-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            margin-bottom: var(--space-xl);
         }
-        h1 { margin: 0; color: #7b2cbf; }
-        .grid {
+        .admin-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: var(--space-lg);
         }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            max-height: 500px;
+        .card-scrollable {
+            max-height: 450px;
             overflow-y: auto;
         }
-        .card h2 {
-            border-bottom: 2px solid #7b2cbf;
-            padding-bottom: 10px;
-            color: #5a189a;
-            margin-top: 0;
+        .full-width {
+            grid-column: 1 / -1;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
+        .question-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--primary-100);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            border-radius: var(--radius-md);
+            transition: box-shadow var(--transition-fast);
         }
-        th, td {
-            text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
+        .question-item:hover {
+            box-shadow: var(--shadow-sm);
+            border-color: var(--primary-300);
         }
-        th { background-color: #f8f9fa; }
-        .danger { color: #dc3545; font-weight: bold; }
-        button {
-            background-color: #7b2cbf;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover { background-color: #5a189a; }
-        
-        /* Formularios */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-        .form-group input, .form-group textarea {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        .text-danger {
+            color: var(--danger-text);
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>Dashboard del Profesor</h1>
-        <button onclick="exitAdmin()">Salir del Panel</button>
-    </div>
-
-    <div class="grid">
-        <!-- Resultados -->
-        <div class="card">
-            <h2>Resultados de Exámenes</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Alumno</th>
-                        <th>Nota Test</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="students-table">
-                    <!-- Dinámico -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Alertas de Fraude y Logs -->
-        <div class="card">
-            <h2>Registro de Actividad (Alertas)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Hora</th>
-                        <th>Evento</th>
-                        <th>Detalle</th>
-                    </tr>
-                </thead>
-                <tbody id="logs-table">
-                    <!-- Dinámico -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Gestión de Preguntas -->
-        <div class="card" style="grid-column: span 2;">
-            <h2>Preguntas Actuales</h2>
-            <ul id="questions-list" style="list-style-type: none; padding: 0;">
-                <!-- Dinámico -->
-            </ul>
-            
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            
-            <h3>Añadir Nueva Pregunta</h3>
-            <div class="form-group">
-                <label>Pregunta:</label>
-                <input type="text" id="new-q-text">
+    <main role="main">
+        <header class="admin-header card">
+            <div>
+                <h1 style="margin: 0; color: var(--primary-700);">
+                    <span aria-hidden="true">👨‍🏫</span> Dashboard del Profesor
+                </h1>
             </div>
-            <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>Opción A:</label>
-                    <input type="text" id="new-q-a">
-                </div>
-                <div class="form-group">
-                    <label>Opción B:</label>
-                    <input type="text" id="new-q-b">
-                </div>
-                <div class="form-group">
-                    <label>Opción C:</label>
-                    <input type="text" id="new-q-c">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Respuesta Correcta (a, b o c):</label>
-                <input type="text" id="new-q-correct" style="width: 50px;" maxlength="1">
-            </div>
-            <button onclick="addQuestion()">Guardar Pregunta</button>
-        </div>
-    </div>
+            <button class="btn btn--secondary" onclick="exitAdmin()" aria-label="Salir del Panel de Profesor">
+                <span class="btn-icon" aria-hidden="true">🚪</span> Salir del Panel
+            </button>
+        </header>
 
-    <script>
+        <div class="admin-grid">
+            <!-- Resultados -->
+            <section class="card card-scrollable" aria-labelledby="resultados-title">
+                <div class="card__header">
+                    <span class="header-icon" aria-hidden="true">📊</span>
+                    <h2 id="resultados-title">Resultados de Exámenes</h2>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Alumno</th>
+                                <th>Nota Test</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table" aria-live="polite">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Alertas de Fraude y Logs -->
+            <section class="card card-scrollable" aria-labelledby="logs-title">
+                <div class="card__header">
+                    <span class="header-icon" aria-hidden="true">🚨</span>
+                    <h2 id="logs-title">Registro de Actividad (Alertas)</h2>
+                </div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Evento</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table" aria-live="polite">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Gestión de Preguntas -->
+            <section class="card full-width" aria-labelledby="preguntas-title">
+                <div class="card__header">
+                    <span class="header-icon" aria-hidden="true">📋</span>
+                    <h2 id="preguntas-title">Gestión de Preguntas</h2>
+                </div>
+                
+                <div class="admin-grid">
+                    <div>
+                        <h3 class="mb-md">Preguntas Actuales</h3>
+                        <ul id="questions-list" style="list-style: none; padding: 0;" aria-live="polite">
+                            <!-- Dinámico -->
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="mb-md">Añadir Nueva Pregunta</h3>
+                        <div class="card" style="background: var(--bg-base); box-shadow: none; border: 1px solid var(--primary-100);">
+                            <div class="form-group">
+                                <label class="form-label" for="new-q-text">Pregunta:</label>
+                                <input type="text" id="new-q-text" class="form-input" placeholder="Ej. ¿Cuál es el océano más grande?">
+                            </div>
+                            
+                            <div class="admin-grid" style="gap: var(--space-sm);">
+                                <div class="form-group">
+                                    <label class="form-label" for="new-q-a">Opción A:</label>
+                                    <input type="text" id="new-q-a" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="new-q-b">Opción B:</label>
+                                    <input type="text" id="new-q-b" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="new-q-c">Opción C:</label>
+                                    <input type="text" id="new-q-c" class="form-input">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="max-width: 200px;">
+                                <label class="form-label" for="new-q-correct">Respuesta Correcta:</label>
+                                <select id="new-q-correct" class="form-select">
+                                    <option value="a">Opción A</option>
+                                    <option value="b">Opción B</option>
+                                    <option value="c">Opción C</option>
+                                </select>
+                            </div>
+                            
+                            <button class="btn btn--primary mt-md" onclick="addQuestion()">
+                                <span class="btn-icon" aria-hidden="true">➕</span> Guardar Pregunta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module">
+        import { getDBWeb, addQuestionWeb } from './firebase-web.js';
+
         let db = null;
-        // electronAPI vive en el parent (index.html), no en el iframe
         const api = window.parent.electronAPI;
 
         async function loadData() {
             try {
-                db = await api.getDB();
+                if (api) {
+                    db = await api.getDB();
+                } else {
+                    // Modo web: conexión directa a Firebase
+                    db = await getDBWeb();
+                }
                 renderStudents();
                 renderLogs();
                 renderQuestions();
@@ -173,14 +189,14 @@
             db.students.forEach(s => {
                 tbody.innerHTML += `
                     <tr>
-                        <td>${s.name}</td>
-                        <td>${s.score} / 10</td>
+                        <td><strong>${s.name}</strong></td>
+                        <td><span class="badge badge--success">${s.score} pts</span></td>
                         <td>Completado</td>
                     </tr>
                 `;
             });
             if(db.students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3">No hay exámenes completados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay exámenes completados.</td></tr>';
             }
         }
 
@@ -188,21 +204,27 @@
             const tbody = document.getElementById('logs-table');
             tbody.innerHTML = '';
             if(!db.logs) db.logs = [];
-            // Revertir para ver los más recientes arriba
+            
             const reversedLogs = [...db.logs].reverse();
             reversedLogs.forEach(l => {
-                const isDanger = l.tipoEvento.includes('FRAUDE') || l.tipoEvento.includes('FOCO_PERDIDO');
+                const tipo = l.tipoEvento || l.event || ''; // Soporte para formato anterior
+                const isDanger = tipo.includes('FRAUDE') || tipo.includes('FOCO_PERDIDO');
                 const time = new Date(l.timestamp).toLocaleTimeString();
+                
                 tbody.innerHTML += `
-                    <tr class="${isDanger ? 'danger' : ''}">
-                        <td>${time}</td>
-                        <td>${l.tipoEvento}</td>
-                        <td>${l.detalle}</td>
+                    <tr>
+                        <td class="${isDanger ? 'text-danger' : ''}">${time}</td>
+                        <td>
+                            <span class="badge ${isDanger ? 'badge--danger' : 'badge--warning'}">
+                                ${tipo}
+                            </span>
+                        </td>
+                        <td class="${isDanger ? 'text-danger' : ''}">${l.detail}</td>
                     </tr>
                 `;
             });
             if(db.logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3">No hay registros de actividad.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay registros de actividad.</td></tr>';
             }
         }
 
@@ -210,30 +232,40 @@
             const ul = document.getElementById('questions-list');
             ul.innerHTML = '';
             if(!db.questions) db.questions = [];
-            db.questions.forEach(q => {
+            db.questions.forEach((q, index) => {
+                let optionsHtml = '<em>Opciones no disponibles</em>';
+                if (q.options) {
+                    optionsHtml = Object.entries(q.options).map(([k, v]) => `${k.toUpperCase()}) ${v}`).join('<br>');
+                }
+
                 ul.innerHTML += `
-                    <li style="background: #f8f9fa; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-                        <strong>${q.id}. ${q.text}</strong><br>
-                        A) ${q.options.a} | B) ${q.options.b} | C) ${q.options.c} <br>
-                        <em>Correcta: ${q.correct.toUpperCase()}</em>
+                    <li class="question-item">
+                        <div style="margin-bottom: var(--space-xs);">
+                            <strong>${index + 1}. ${q.text}</strong>
+                        </div>
+                        <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">
+                            ${optionsHtml}
+                        </div>
+                        <div style="font-size: var(--text-xs);">
+                            <span class="badge badge--success">Correcta: ${q.correct ? q.correct.toUpperCase() : 'N/A'}</span>
+                        </div>
                     </li>
                 `;
             });
+            if(db.questions.length === 0) {
+                ul.innerHTML = '<li class="text-muted text-center py-md">No hay preguntas registradas.</li>';
+            }
         }
 
         async function addQuestion() {
-            const text = document.getElementById('new-q-text').value;
-            const a = document.getElementById('new-q-a').value;
-            const b = document.getElementById('new-q-b').value;
-            const c = document.getElementById('new-q-c').value;
-            const correct = document.getElementById('new-q-correct').value.toLowerCase();
+            const text = document.getElementById('new-q-text').value.trim();
+            const a = document.getElementById('new-q-a').value.trim();
+            const b = document.getElementById('new-q-b').value.trim();
+            const c = document.getElementById('new-q-c').value.trim();
+            const correct = document.getElementById('new-q-correct').value;
 
-            if (!text || !a || !b || !c || !correct) {
-                alert("Llena todos los campos.");
-                return;
-            }
-            if (!['a','b','c'].includes(correct)) {
-                alert("La respuesta correcta debe ser a, b, o c.");
+            if (!text || !a || !b || !c) {
+                alert("⚠️ Por favor llena todos los campos de la pregunta.");
                 return;
             }
 
@@ -241,30 +273,41 @@
                 text,
                 options: { a, b, c },
                 correct,
-                points: 5 // Default
+                points: 5 // Valor por defecto
             };
 
-            await api.addQuestion(newQ);
+            if (api) {
+                await api.addQuestion(newQ);
+            } else {
+                await addQuestionWeb(newQ);
+            }
             
             // Recargar datos para ver la nueva pregunta
             await loadData();
             
-            // Clear form
+            // Limpiar formulario
             document.getElementById('new-q-text').value = '';
             document.getElementById('new-q-a').value = '';
             document.getElementById('new-q-b').value = '';
             document.getElementById('new-q-c').value = '';
-            document.getElementById('new-q-correct').value = '';
+            document.getElementById('new-q-correct').value = 'a';
             
-            renderQuestions();
-            alert("Pregunta añadida.");
+            alert("✅ Pregunta añadida con éxito.");
         }
 
         function exitAdmin() {
             if (window.parent && window.parent.showExitDialog) {
                 window.parent.showExitDialog();
+            } else {
+                alert("Modo web: cerrando sesión");
+                location.reload();
             }
         }
+
+        // Exponer funciones al scope global para botones HTML
+        window.loadData = loadData;
+        window.addQuestion = addQuestion;
+        window.exitAdmin = exitAdmin;
 
         // Init
         loadData();
