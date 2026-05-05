@@ -168,6 +168,89 @@
         window.finishExam = finishExam;
 
         loadExam();
+
+        // ─── Detección de Pérdida de Foco (Modo Web) ──────────────────────
+        // En modo Electron esto lo maneja el proceso principal (main.js).
+        // En modo web lo manejamos desde aquí.
+        let blurTimeoutWeb = null;
+        let examBlocked = false;
+
+        function handleFocusLost() {
+            if (examBlocked || api) return; // En Electron lo maneja main.js
+
+            // Guardar en Firebase
+            import('./firebase-web.js').then(({ addLogWeb }) => {
+                addLogWeb('FOCO_PERDIDO', `[${studentName}] El alumno salió de la pantalla del examen (modo web).`);
+            });
+
+            // Mostrar alerta visual
+            showWebAlert('¡ADVERTENCIA! Has salido del examen. Tienes 5 segundos para regresar o el examen se bloqueará.');
+
+            blurTimeoutWeb = setTimeout(() => {
+                import('./firebase-web.js').then(({ addLogWeb }) => {
+                    addLogWeb('EXAMEN_BLOQUEADO', `[${studentName}] El examen fue bloqueado por pérdida de foco en modo web.`);
+                });
+                examBlocked = true;
+                showWebAlert('EXAMEN BLOQUEADO. Comunícate con tu profesor para continuar.');
+                // Deshabilitar el botón de finalizar para que no pueda enviar
+                const btn = document.querySelector('.submit-btn');
+                if (btn) btn.disabled = true;
+            }, 5000);
+        }
+
+        function handleFocusRegained() {
+            if (api) return;
+            if (blurTimeoutWeb) {
+                clearTimeout(blurTimeoutWeb);
+                blurTimeoutWeb = null;
+            }
+            if (!examBlocked) {
+                hideWebAlert();
+                import('./firebase-web.js').then(({ addLogWeb }) => {
+                    addLogWeb('FOCO_RECUPERADO', `[${studentName}] El alumno regresó al examen a tiempo (modo web).`);
+                });
+            }
+        }
+
+        // Alerta visual para modo web (no tenemos el overlay del parent)
+        let alertDiv = null;
+        function showWebAlert(message) {
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(220, 53, 69, 0.97);
+                    display: flex; flex-direction: column;
+                    align-items: center; justify-content: center;
+                    z-index: 99999; color: white; text-align: center; padding: 20px;
+                    font-family: 'Inter', sans-serif;
+                `;
+                document.body.appendChild(alertDiv);
+            }
+            alertDiv.innerHTML = `
+                <h1 style="font-size: 2.5em; margin-bottom: 20px; font-weight: bold;">¡ADVERTENCIA!</h1>
+                <p style="font-size: 1.3em; max-width: 600px;">${message}</p>
+            `;
+            alertDiv.style.display = 'flex';
+        }
+
+        function hideWebAlert() {
+            if (alertDiv) alertDiv.style.display = 'none';
+        }
+
+        // Escuchar cambio de visibilidad de pestaña (cambiar de tab en Chrome)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                handleFocusLost();
+            } else {
+                handleFocusRegained();
+            }
+        });
+
+        // Escuchar pérdida de foco de la ventana completa
+        window.addEventListener('blur', handleFocusLost);
+        window.addEventListener('focus', handleFocusRegained);
+
         // Bloquear copiar y pegar en este frame también
         document.addEventListener('contextmenu', event => event.preventDefault());
         document.addEventListener('copy', event => event.preventDefault());

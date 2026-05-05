@@ -1,13 +1,24 @@
 # Navegador Seguro para Exámenes
 
 ## Descripción General
-Este proyecto es una aplicación de escritorio basada en **Electron.js** diseñada para funcionar como un "Safe Exam Browser" (Navegador Seguro). Su objetivo principal es encapsular una plataforma de exámenes web dentro de un entorno controlado, con el fin de prevenir que los estudiantes hagan trampa bloqueando interacciones comunes del sistema operativo.
+
+Este proyecto es una aplicación de evaluación académica con **arquitectura dual**:
+
+- **Modo Escritorio (Electron):** Funciona como un *Safe Exam Browser* que bloquea la computadora del estudiante durante la evaluación, impidiendo el uso de otras aplicaciones.
+- **Modo Web:** Funciona como un sistema de examen en línea accesible desde cualquier navegador moderno. Los datos se sincronizan en tiempo real con **Firebase Firestore**.
+
+Ambos modos comparten la misma base de datos en la nube, por lo que el profesor puede gestionar preguntas y ver resultados desde cualquier entorno.
+
+---
 
 ## Características de Seguridad Implementadas
-1. **Modo Quiosco (Kiosk Mode):** La aplicación ocupa toda la pantalla de manera inamovible, ocultando la barra de tareas y el entorno de escritorio normal.
-2. **Restricción de Interfaz:** Está deshabilitado globalmente el clic derecho, así como las funciones de teclado para copiar, cortar y pegar, con el fin de evitar fuga o ingreso de información ajena.
-3. **Bloqueo de Herramientas de Desarrollador:** Atajos como `F12` o `Ctrl+Shift+I` están bloqueados para evitar inspección y modificación de la página de examen.
-4. **Mecanismo de Salida Seguro:** El programa bloquea los intentos de cierre convencional (como `Alt+F4` o `Cmd+Q`). En su lugar, intercepta el intento de cierre y exige introducir una contraseña. La contraseña por defecto del profesor es `1234`.
+
+1. **Modo Quiosco (Kiosk Mode):** La aplicación ocupa toda la pantalla de manera inamovible, ocultando la barra de tareas y el entorno de escritorio (solo en modo Electron).
+2. **Restricción de Interfaz:** Están deshabilitados el clic derecho y las funciones de teclado para copiar, cortar y pegar, en ambos modos.
+3. **Bloqueo de Herramientas de Desarrollador:** Atajos como `F12` o `Ctrl+Shift+I` están bloqueados (modo Electron).
+4. **Detección de Pérdida de Foco:** Si el estudiante minimiza la ventana o cambia de pestaña, el sistema registra el evento, muestra una alerta visual y — tras 5 segundos — cancela el examen automáticamente.
+5. **Mecanismo de Salida Seguro:** La contraseña para salir del examen es **`1234`**. La contraseña de acceso al panel del profesor es **`admin`**.
+6. **Trazabilidad por Alumno:** Cada evento de seguridad (pérdida de foco, navegación, fraude) queda registrado en Firebase junto con el nombre del estudiante que lo generó.
 
 ---
 
