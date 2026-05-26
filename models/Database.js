@@ -1,5 +1,5 @@
 const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, getDocs, addDoc } = require('firebase/firestore');
+const { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } = require('firebase/firestore');
 
 class Database {
     constructor() {
@@ -55,6 +55,17 @@ class Database {
         }
     }
 
+    async updateStudent(studentId, updatedData) {
+        try {
+            const studentRef = doc(this.db, 'students', studentId);
+            await updateDoc(studentRef, updatedData);
+            return true;
+        } catch(e) {
+            console.error("Error updating student in Firebase", e);
+            return false;
+        }
+    }
+
     async addLog(eventType, detail) {
         try {
             await addDoc(collection(this.db, 'logs'), {
@@ -75,6 +86,28 @@ class Database {
             return true;
         } catch(e) {
             console.error("Error saving question to Firebase", e);
+            return false;
+        }
+    }
+
+    async updateQuestion(questionId, updatedData) {
+        try {
+            const questionRef = doc(this.db, 'questions', questionId);
+            await updateDoc(questionRef, updatedData);
+            return true;
+        } catch(e) {
+            console.error("Error updating question in Firebase", e);
+            return false;
+        }
+    }
+
+    async deleteQuestion(questionId) {
+        try {
+            const questionRef = doc(this.db, 'questions', questionId);
+            await deleteDoc(questionRef);
+            return true;
+        } catch(e) {
+            console.error("Error deleting question from Firebase", e);
             return false;
         }
     }

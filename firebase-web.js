@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDggCkAu3Fzj7i8nJl7AKxNWi-dd4pb2ww",
@@ -43,11 +43,38 @@ export async function saveStudentWeb(studentData) {
     }
 }
 
+export async function updateStudentWeb(studentId, updatedData) {
+    try {
+        const studentRef = doc(db, 'students', studentId);
+        await updateDoc(studentRef, updatedData);
+    } catch(e) {
+        console.error("Error updating student Web", e);
+    }
+}
+
 export async function addQuestionWeb(question) {
     try {
         await addDoc(collection(db, 'questions'), question);
     } catch(e) {
         console.error("Error adding question Web", e);
+    }
+}
+
+export async function updateQuestionWeb(questionId, updatedData) {
+    try {
+        const questionRef = doc(db, 'questions', questionId);
+        await updateDoc(questionRef, updatedData);
+    } catch(e) {
+        console.error("Error updating question Web", e);
+    }
+}
+
+export async function deleteQuestionWeb(questionId) {
+    try {
+        const questionRef = doc(db, 'questions', questionId);
+        await deleteDoc(questionRef);
+    } catch(e) {
+        console.error("Error deleting question Web", e);
     }
 }
 

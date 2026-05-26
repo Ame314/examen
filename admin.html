@@ -72,6 +72,7 @@
                                 <th>Alumno</th>
                                 <th>Nota Test</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="students-table" aria-live="polite">
@@ -160,8 +161,87 @@
         </div>
     </main>
 
+    <!-- Modal de Edición de Alumnos -->
+    <div id="edit-modal" class="overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+        <div class="modal animate-slideUp" style="text-align: left; max-width: 500px;">
+            <div class="card__header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
+                <span class="header-icon" aria-hidden="true">✏️</span>
+                <h2 id="modal-edit-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Editar Datos del Alumno</h2>
+            </div>
+            <input type="hidden" id="edit-student-id">
+            
+            <div class="form-group">
+                <label class="form-label" for="edit-student-name">Nombre Completo:</label>
+                <input type="text" id="edit-student-name" class="form-input" placeholder="Nombre del alumno">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="edit-student-score">Calificación (Puntos):</label>
+                <input type="number" id="edit-student-score" class="form-input" min="0" placeholder="Puntos obtenidos">
+            </div>
+            
+            <div class="flex gap-md mt-lg justify-center">
+                <button class="btn btn--secondary" onclick="closeEditModal()" aria-label="Cancelar y cerrar diálogo">
+                    Cancelar
+                </button>
+                <button class="btn btn--primary" onclick="saveStudentEdit()" aria-label="Guardar cambios del alumno">
+                    <span class="btn-icon" aria-hidden="true">💾</span> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Preguntas -->
+    <div id="edit-question-modal" class="overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-edit-q-title">
+        <div class="modal animate-slideUp" style="text-align: left; max-width: 550px;">
+            <div class="card__header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
+                <span class="header-icon" aria-hidden="true">✏️</span>
+                <h2 id="modal-edit-q-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Editar Pregunta</h2>
+            </div>
+            <input type="hidden" id="edit-q-id">
+            
+            <div class="form-group">
+                <label class="form-label" for="edit-q-text">Pregunta:</label>
+                <input type="text" id="edit-q-text" class="form-input" placeholder="Pregunta">
+            </div>
+            
+            <div class="admin-grid" style="gap: var(--space-sm); grid-template-columns: 1fr 1fr 1fr; margin-bottom: var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label" for="edit-q-a">Opción A:</label>
+                    <input type="text" id="edit-q-a" class="form-input" placeholder="Opción A">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-q-b">Opción B:</label>
+                    <input type="text" id="edit-q-b" class="form-input" placeholder="Opción B">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="edit-q-c">Opción C:</label>
+                    <input type="text" id="edit-q-c" class="form-input" placeholder="Opción C">
+                </div>
+            </div>
+
+            <div class="form-group" style="max-width: 250px;">
+                <label class="form-label" for="edit-q-correct">Respuesta Correcta:</label>
+                <select id="edit-q-correct" class="form-select">
+                    <option value="a">Opción A</option>
+                    <option value="b">Opción B</option>
+                    <option value="c">Opción C</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-md mt-lg justify-center">
+                <button class="btn btn--secondary" onclick="closeEditQuestionModal()" aria-label="Cancelar y cerrar diálogo">
+                    Cancelar
+                </button>
+                <button class="btn btn--primary" onclick="saveQuestionEdit()" aria-label="Guardar cambios de la pregunta">
+                    <span class="btn-icon" aria-hidden="true">💾</span> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { getDBWeb, addQuestionWeb } from './firebase-web.js';
+        import { getDBWeb, addQuestionWeb, updateStudentWeb, updateQuestionWeb, deleteQuestionWeb } from './firebase-web.js';
 
         let db = null;
         const api = window.parent.electronAPI;
@@ -192,11 +272,16 @@
                         <td><strong>${s.name}</strong></td>
                         <td><span class="badge badge--success">${s.score} pts</span></td>
                         <td>Completado</td>
+                        <td>
+                            <button class="btn btn--secondary" style="padding: var(--space-xs) var(--space-sm); font-size: var(--text-xs);" onclick="openEditModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.score})" aria-label="Editar alumno ${s.name}">
+                                ✏️ Editar
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
             if(db.students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay exámenes completados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay exámenes completados.</td></tr>';
             }
         }
 
@@ -238,6 +323,11 @@
                     optionsHtml = Object.entries(q.options).map(([k, v]) => `${k.toUpperCase()}) ${v}`).join('<br>');
                 }
 
+                const qTextEscaped = q.text.replace(/'/g, "\\'");
+                const optAEscaped = q.options && q.options.a ? q.options.a.replace(/'/g, "\\'") : '';
+                const optBEscaped = q.options && q.options.b ? q.options.b.replace(/'/g, "\\'") : '';
+                const optCEscaped = q.options && q.options.c ? q.options.c.replace(/'/g, "\\'") : '';
+
                 ul.innerHTML += `
                     <li class="question-item">
                         <div style="margin-bottom: var(--space-xs);">
@@ -246,8 +336,16 @@
                         <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">
                             ${optionsHtml}
                         </div>
-                        <div style="font-size: var(--text-xs);">
+                        <div class="flex justify-between items-center" style="font-size: var(--text-xs); margin-top: var(--space-xs);">
                             <span class="badge badge--success">Correcta: ${q.correct ? q.correct.toUpperCase() : 'N/A'}</span>
+                            <div class="flex gap-sm">
+                                <button class="btn btn--secondary" style="padding: 2px 6px; font-size: var(--text-xs);" onclick="openEditQuestionModal('${q.id}', '${qTextEscaped}', '${optAEscaped}', '${optBEscaped}', '${optCEscaped}', '${q.correct}')" aria-label="Editar pregunta ${index + 1}">
+                                    ✏️
+                                </button>
+                                <button class="btn btn--danger" style="padding: 2px 6px; font-size: var(--text-xs);" onclick="deleteQuestion('${q.id}')" aria-label="Eliminar pregunta ${index + 1}">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
                     </li>
                 `;
@@ -295,6 +393,114 @@
             alert("✅ Pregunta añadida con éxito.");
         }
 
+        function openEditModal(id, name, score) {
+            document.getElementById('edit-student-id').value = id;
+            document.getElementById('edit-student-name').value = name;
+            document.getElementById('edit-student-score').value = score;
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
+        async function saveStudentEdit() {
+            const id = document.getElementById('edit-student-id').value;
+            const name = document.getElementById('edit-student-name').value.trim();
+            const scoreVal = document.getElementById('edit-student-score').value;
+            const score = parseInt(scoreVal, 10);
+
+            if (!name || isNaN(score) || score < 0) {
+                alert("⚠️ Por favor ingresa un nombre válido y una calificación mayor o igual a 0.");
+                return;
+            }
+
+            try {
+                const updatedData = { name, score };
+                if (api) {
+                    await api.updateStudent(id, updatedData);
+                } else {
+                    await updateStudentWeb(id, updatedData);
+                }
+                
+                alert("✅ Alumno actualizado con éxito.");
+                closeEditModal();
+                await loadData();
+            } catch(e) {
+                console.error("Error al actualizar alumno:", e);
+                alert("❌ Error al guardar los cambios.");
+            }
+        }
+
+        function openEditQuestionModal(id, text, a, b, c, correct) {
+            document.getElementById('edit-q-id').value = id;
+            document.getElementById('edit-q-text').value = text;
+            document.getElementById('edit-q-a').value = a;
+            document.getElementById('edit-q-b').value = b;
+            document.getElementById('edit-q-c').value = c;
+            document.getElementById('edit-q-correct').value = correct;
+            document.getElementById('edit-question-modal').style.display = 'flex';
+        }
+
+        function closeEditQuestionModal() {
+            document.getElementById('edit-question-modal').style.display = 'none';
+        }
+
+        async function saveQuestionEdit() {
+            const id = document.getElementById('edit-q-id').value;
+            const text = document.getElementById('edit-q-text').value.trim();
+            const a = document.getElementById('edit-q-a').value.trim();
+            const b = document.getElementById('edit-q-b').value.trim();
+            const c = document.getElementById('edit-q-c').value.trim();
+            const correct = document.getElementById('edit-q-correct').value;
+
+            if (!text || !a || !b || !c) {
+                alert("⚠️ Por favor llena todos los campos de la pregunta.");
+                return;
+            }
+
+            try {
+                const updatedData = {
+                    text,
+                    options: { a, b, c },
+                    correct
+                };
+
+                if (api) {
+                    await api.updateQuestion(id, updatedData);
+                } else {
+                    await updateQuestionWeb(id, updatedData);
+                }
+
+                alert("✅ Pregunta actualizada con éxito.");
+                closeEditQuestionModal();
+                await loadData();
+            } catch(e) {
+                console.error("Error al actualizar pregunta:", e);
+                alert("❌ Error al guardar los cambios.");
+            }
+        }
+
+        async function deleteQuestion(id) {
+            if (!confirm("⚠️ ¿Estás seguro de que deseas eliminar esta pregunta?")) {
+                return;
+            }
+
+            try {
+                if (api) {
+                    await api.deleteQuestion(id);
+                } else {
+                    await deleteQuestionWeb(id);
+                }
+
+                alert("✅ Pregunta eliminada con éxito.");
+                await loadData();
+            } catch(e) {
+                console.error("Error al eliminar pregunta:", e);
+                alert("❌ Error al eliminar la pregunta.");
+            }
+        }
+
         function exitAdmin() {
             if (window.parent && window.parent.showExitDialog) {
                 window.parent.showExitDialog();
@@ -308,6 +514,13 @@
         window.loadData = loadData;
         window.addQuestion = addQuestion;
         window.exitAdmin = exitAdmin;
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.saveStudentEdit = saveStudentEdit;
+        window.openEditQuestionModal = openEditQuestionModal;
+        window.closeEditQuestionModal = closeEditQuestionModal;
+        window.saveQuestionEdit = saveQuestionEdit;
+        window.deleteQuestion = deleteQuestion;
 
         // Init
         loadData();

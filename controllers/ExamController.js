@@ -11,6 +11,18 @@ class ExamController {
         return await this.db.addQuestion(question);
     }
 
+    async updateStudent(studentId, updatedData) {
+        return await this.db.updateStudent(studentId, updatedData);
+    }
+
+    async updateQuestion(questionId, updatedData) {
+        return await this.db.updateQuestion(questionId, updatedData);
+    }
+
+    async deleteQuestion(questionId) {
+        return await this.db.deleteQuestion(questionId);
+    }
+
     async gradeExam(studentName, answers, essay) {
         const data = await this.db.readDB();
         let score = 0;

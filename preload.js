@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getDB: () => ipcRenderer.invoke('db-get'),
     addQuestion: (q) => ipcRenderer.invoke('add-question', q),
     saveStudent: (student) => ipcRenderer.invoke('save-student', student),
+    updateStudent: (studentId, updatedData) => ipcRenderer.invoke('update-student', { studentId, updatedData }),
+    updateQuestion: (questionId, updatedData) => ipcRenderer.invoke('update-question', { questionId, updatedData }),
+    deleteQuestion: (questionId) => ipcRenderer.invoke('delete-question', questionId),
 
     // Examen
     gradeExam: (data) => ipcRenderer.invoke('grade-exam', data),

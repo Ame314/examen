@@ -38,10 +38,25 @@ ipcMain.handle('add-question', (event, question) => {
     return examController.addQuestion(question);
 });
 
+// Actualizar datos de pregunta
+ipcMain.handle('update-question', (event, { questionId, updatedData }) => {
+    return examController.updateQuestion(questionId, updatedData);
+});
+
+// Eliminar pregunta
+ipcMain.handle('delete-question', (event, questionId) => {
+    return examController.deleteQuestion(questionId);
+});
+
 // Guardar resultado de estudiante
 ipcMain.handle('save-student', (event, student) => {
     db.saveStudent(student);
     return true;
+});
+
+// Actualizar datos de estudiante (edición)
+ipcMain.handle('update-student', (event, { studentId, updatedData }) => {
+    return examController.updateStudent(studentId, updatedData);
 });
 
 // Calificar examen completo
