@@ -33,15 +33,57 @@ let mainWindow;
 // Obtener todos los datos (Vista necesita poblar las pantallas)
 ipcMain.handle('db-get', () => examController.getAllData());
 
+// Verificar login de usuarios
+ipcMain.handle('verify-login', (event, { username, password }) => {
+    return db.verifyLogin(username, password);
+});
+
+// CRUD de exámenes
+ipcMain.handle('add-exam', (event, exam) => {
+    return db.saveExam(exam);
+});
+
+ipcMain.handle('update-exam', (event, { examId, updatedData }) => {
+    return db.updateExam(examId, updatedData);
+});
+
+ipcMain.handle('delete-exam', (event, examId) => {
+    return db.deleteExam(examId);
+});
+
+// CRUD de usuarios
+ipcMain.handle('add-user', (event, user) => {
+    return db.saveUser(user);
+});
+
+ipcMain.handle('delete-user', (event, userId) => {
+    return db.deleteUser(userId);
+});
+
 // Añadir pregunta (delegado al ExamController con validación)
 ipcMain.handle('add-question', (event, question) => {
     return examController.addQuestion(question);
+});
+
+// Actualizar datos de pregunta
+ipcMain.handle('update-question', (event, { questionId, updatedData }) => {
+    return examController.updateQuestion(questionId, updatedData);
+});
+
+// Eliminar pregunta
+ipcMain.handle('delete-question', (event, questionId) => {
+    return examController.deleteQuestion(questionId);
 });
 
 // Guardar resultado de estudiante
 ipcMain.handle('save-student', (event, student) => {
     db.saveStudent(student);
     return true;
+});
+
+// Actualizar datos de estudiante (edición)
+ipcMain.handle('update-student', (event, { studentId, updatedData }) => {
+    return examController.updateStudent(studentId, updatedData);
 });
 
 // Calificar examen completo
@@ -154,12 +196,7 @@ function createWindow() {
 
         blurTimeout = setTimeout(() => {
             guardarEnBDD('FRAUDE_DETECTADO', 'El alumno estuvo fuera de la pantalla por más de 5 segundos. Examen cancelado.');
-            mainWindow.webContents.send('show-alert', 'FRAUDE DETECTADO. Examen Cancelado.');
-
-            setTimeout(() => {
-                app.isQuitting = true;
-                app.quit();
-            }, 2000);
+            mainWindow.webContents.send('fraud-confirmed');
         }, 5000);
     });
 

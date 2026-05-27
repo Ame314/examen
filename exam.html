@@ -2,200 +2,519 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Examen de Ejemplo</title>
+    <title>Examen Seguro</title>
+    <link rel="stylesheet" href="styles/design-system.css">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #ffffff;
-            color: #333;
-            margin: 0;
-            padding: 40px;
+            padding: var(--space-xl);
+            background-color: var(--bg-base);
+            min-height: 100vh;
         }
-        .container {
+
+        .exam-container {
             max-width: 800px;
             margin: 0 auto;
-            background: #f9f9f9;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #7b2cbf;
-            border-bottom: 2px solid #7b2cbf;
-            padding-bottom: 10px;
+
+        .exam-header {
+            margin-bottom: var(--space-xl);
         }
-        .question {
-            margin-top: 30px;
+
+        .exam-header h1 {
+            color: var(--primary-800);
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-xs);
         }
-        .question h3 {
-            margin-bottom: 15px;
+
+        .student-badge-bar {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+            flex-wrap: wrap;
         }
-        .options {
-            list-style-type: none;
-            padding: 0;
+
+        .question-card {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-xl);
+            transition: border-color var(--transition-fast);
+            border: 2px solid transparent;
         }
-        .options li {
-            margin-bottom: 10px;
+
+        .question-card:focus-within {
+            border-color: var(--primary-200);
         }
-        label {
+
+        .question-card h3 {
+            font-size: var(--text-lg);
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Opciones interactivas */
+        .option-item {
+            margin-bottom: var(--space-sm);
+            list-style: none;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md) var(--space-lg);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-size: 16px;
+            transition: all var(--transition-fast);
+            font-size: var(--text-base);
+            color: var(--text-primary);
+            font-weight: 500;
         }
-        input[type="radio"] {
-            margin-right: 10px;
+
+        .option-label:hover {
+            border-color: rgba(139, 92, 246, 0.25);
+            background: rgba(139, 92, 246, 0.04);
         }
-        .submit-btn {
-            margin-top: 40px;
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: #7b2cbf;
-            color: white;
-            border: none;
-            border-radius: 8px;
+
+        .option-label input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-400);
+            flex-shrink: 0;
             cursor: pointer;
         }
-        .submit-btn:hover {
-            background-color: #5a189a;
+
+        /* Estilo para opción seleccionada */
+        .option-label.selected {
+            border-color: var(--primary-400);
+            background: rgba(139, 92, 246, 0.06);
+            box-shadow: 0 0 0 1px var(--primary-400);
+            color: #ffffff;
+        }
+
+        .option-label.selected::after {
+            content: '✓';
+            margin-left: auto;
+            color: var(--primary-400);
+            font-weight: 700;
+            font-size: var(--text-lg);
+        }
+
+        .essay-textarea {
+            width: 100%;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: inherit;
+            font-size: var(--text-base);
+            resize: vertical;
+            min-height: 120px;
+            background: rgba(12, 8, 30, 0.5);
+            color: var(--text-primary);
+            transition: all var(--transition-fast);
+        }
+
+        .essay-textarea:focus {
+            border-color: var(--primary-400);
+            box-shadow: var(--focus-ring);
+            outline: none;
+            background: rgba(12, 8, 30, 0.8);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Examen de Historia Básica</h1>
-        <p>Por favor, responde a las siguientes preguntas. Recuerda que estás en un entorno seguro.</p>
+
+    <div class="exam-container">
+        <header class="exam-header card">
+            <div class="student-badge-bar">
+                <span class="badge badge--success" id="student-name-badge">Estudiante: Amelie</span>
+                <span class="badge badge--info" id="exam-subject-badge">Materia: Evaluaciones</span>
+                <span class="badge badge--danger" id="fraud-mode-badge">Entorno LockDown Activo</span>
+            </div>
+            
+            <h1 id="exam-title">Cargando Examen...</h1>
+            <p id="exam-description" style="color: var(--text-secondary); margin-bottom: var(--space-md);">Por favor, responde honestamente a las preguntas presentadas.</p>
+            
+            <div class="progress-text" id="progress-indicator">Completado: 0%</div>
+            <div class="progress-bar" aria-hidden="true">
+                <div class="progress-bar__fill" id="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+        </header>
 
         <form id="exam-form">
-            <div id="questions-container">
-                <!-- Preguntas cargadas dinámicamente -->
+            <div id="questions-container" aria-live="polite">
+                <!-- Preguntas dinámicas -->
             </div>
 
-            <button type="button" class="submit-btn" onclick="finishExam()">Finalizar y Salir</button>
+            <div class="flex justify-between items-center mt-xl" style="padding-bottom: var(--space-2xl);">
+                <button type="button" class="btn btn--secondary" onclick="abandonExam()">
+                    Cancelar Examen
+                </button>
+                <button type="button" class="btn btn--primary btn--lg" onclick="finishExam()">
+                    Finalizar y Enviar
+                </button>
+            </div>
         </form>
     </div>
 
     <script type="module">
-        import { getDBWeb, saveStudentWeb } from './firebase-web.js';
+        import { getDBWeb, saveStudentWeb, addLogWeb } from './firebase-web.js';
 
         let db = null;
-        // electronAPI vive en el parent (index.html), no en el iframe
         const api = window.parent.electronAPI;
-        
-        // Corregido: Obtenemos el nombre por URL para evitar el problema con sessionStorage
+
+        // Parsear parámetros de URL
         const urlParams = new URLSearchParams(window.location.search);
-        let studentName = urlParams.get('name') || window.parent.sessionStorage?.getItem('studentName') || 'Estudiante Anónimo';
+        const examId = urlParams.get('examId');
+        const studentName = urlParams.get('name') || sessionStorage.getItem('studentName') || 'Estudiante Anónimo';
+        const studentUsername = sessionStorage.getItem('studentUsername') || 'estudiante';
 
-        async function loadExam() {
-            if (api) {
-                db = await api.getDB();
-            } else {
-                // Modo web: conexión directa a Firebase
-                db = await getDBWeb();
-            }
+        let exam = null;
+        let examQuestions = [];
 
-            const container = document.getElementById('questions-container');
-            container.innerHTML = '';
-            
-            if(!db.questions) db.questions = [];
-            
-            db.questions.forEach((q, index) => {
-                let optionsHtml = '';
-                if (q.options) {
-                    for (const [key, value] of Object.entries(q.options)) {
-                        optionsHtml += `<li><label><input type="radio" name="q${q.id}" value="${key}"> ${value}</label></li>`;
-                    }
+        async function initExam() {
+            try {
+                if (api) {
+                    db = await api.getDB();
                 } else {
-                    optionsHtml = `<li><label><input type="radio" name="q${q.id}" value="a"> Verdadero</label></li>
-                                   <li><label><input type="radio" name="q${q.id}" value="b"> Falso</label></li>`;
+                    db = await getDBWeb();
                 }
 
+                // VALIDACIÓN DE SEGURIDAD: Bloqueo estricto de re-ingreso
+                if (!db.students) db.students = [];
+                const alreadyTaken = db.students.some(s => 
+                    s.examId === examId && 
+                    (s.name === studentName || s.username === studentUsername)
+                );
+
+                if (alreadyTaken) {
+                    alert("Seguridad SEB: Ya has completado este examen anteriormente. No está permitido rendirlo más de una vez.");
+                    returnToDashboard();
+                    return;
+                }
+
+                // Buscar examen
+                exam = db.exams ? db.exams.find(e => e.id === examId) : null;
+                if (!exam) {
+                    alert("❌ Examen no encontrado en la base de datos.");
+                    returnToDashboard();
+                    return;
+                }
+
+                // Configurar etiquetas de encabezado
+                document.getElementById('exam-title').textContent = exam.title;
+                document.getElementById('exam-description').textContent = exam.description || 'Responde con cuidado. El sistema monitorea la navegación.';
+                document.getElementById('student-name-badge').textContent = `Estudiante: ${studentName}`;
+                document.getElementById('exam-subject-badge').textContent = `Examen ID: ${exam.id.substring(0, 8)}`;
+
+                // Filtrar preguntas de este examen
+                examQuestions = db.questions ? db.questions.filter(q => q.examId === examId) : [];
+
+                const container = document.getElementById('questions-container');
+                container.innerHTML = '';
+
+                examQuestions.forEach((q, index) => {
+                    let optionsHtml = '';
+                    if (q.options) {
+                        for (const [key, value] of Object.entries(q.options)) {
+                            optionsHtml += `
+                                <li class="option-item">
+                                    <label class="option-label" id="label-q${q.id}-${key}">
+                                        <input type="radio" name="q${q.id}" value="${key}" onchange="selectOption('q${q.id}', '${key}')">
+                                        <span>${key.toUpperCase()}) ${value}</span>
+                                    </label>
+                                </li>
+                            `;
+                        }
+                    } else {
+                        // Fallback binario
+                        optionsHtml = `
+                            <li class="option-item">
+                                <label class="option-label" id="label-q${q.id}-a">
+                                    <input type="radio" name="q${q.id}" value="a" onchange="selectOption('q${q.id}', 'a')">
+                                    <span>A) Verdadero</span>
+                                </label>
+                            </li>
+                            <li class="option-item">
+                                <label class="option-label" id="label-q${q.id}-b">
+                                    <input type="radio" name="q${q.id}" value="b" onchange="selectOption('q${q.id}', 'b')">
+                                    <span>B) Falso</span>
+                                </label>
+                            </li>
+                        `;
+                    }
+
+                    container.innerHTML += `
+                        <article class="question-card">
+                            <h3>${index + 1}. ${q.text}</h3>
+                            <ul class="radio-group" style="padding: 0; margin: 0;">
+                                ${optionsHtml}
+                            </ul>
+                        </article>
+                    `;
+                });
+
+                // Añadir ensayo libre
                 container.innerHTML += `
-                <div class="question">
-                    <h3>${index + 1}. ${q.text}</h3>
-                    <ul class="options">
-                        ${optionsHtml}
-                    </ul>
-                </div>
+                    <article class="question-card">
+                        <h3>Ensayo / Respuestas de desarrollo</h3>
+                        <p style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-sm);">Escribe tus conclusiones o responde a los requerimientos descritos en las preguntas si corresponde:</p>
+                        <textarea id="essay-field" class="essay-textarea" placeholder="Escribe tu respuesta aquí..." oninput="updateProgressBar()"></textarea>
+                    </article>
                 `;
+
+                updateProgressBar();
+
+            } catch(e) {
+                console.error("Error al cargar examen:", e);
+                alert("❌ Error de red al iniciar el examen.");
+            }
+        }
+
+        // Manejar selección visual de tarjetas de opción
+        function selectOption(questionName, optionKey) {
+            // Deseleccionar todas las opciones de esta pregunta
+            const radios = document.getElementsByName(questionName);
+            radios.forEach(radio => {
+                const label = document.getElementById(`label-${questionName}-${radio.value}`);
+                if (label) {
+                    label.classList.remove('selected');
+                }
             });
+
+            // Seleccionar tarjeta clickeada
+            const activeLabel = document.getElementById(`label-${questionName}-${optionKey}`);
+            if (activeLabel) {
+                activeLabel.classList.add('selected');
+            }
+
+            updateProgressBar();
+        }
+
+        // Calcular progreso del examen
+        function updateProgressBar() {
+            const form = document.getElementById('exam-form');
+            let answered = 0;
+
+            examQuestions.forEach(q => {
+                const radios = document.getElementsByName(`q${q.id}`);
+                const hasSelection = Array.from(radios).some(r => r.checked);
+                if (hasSelection) answered++;
+            });
+
+            // Verificar si el ensayo tiene contenido
+            const essayVal = document.getElementById('essay-field')?.value.trim();
+            const totalSteps = examQuestions.length + 1;
+            if (essayVal && essayVal.length > 5) answered++;
+
+            const pct = Math.min(Math.round((answered / totalSteps) * 100), 100);
             
-            // Add essay
-            container.innerHTML += `
-            <div class="question">
-                <h3>Ensayo: Escribe un breve ensayo final.</h3>
-                <textarea name="essay" rows="5" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit;"></textarea>
-            </div>
-            `;
+            document.getElementById('progress-indicator').textContent = `Completado: ${pct}%`;
+            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
         }
 
         async function finishExam() {
             const form = document.getElementById('exam-form');
             let score = 0;
-            
-            db.questions.forEach(q => {
+
+            // Validar que se hayan contestado preguntas
+            let missingAnswers = false;
+            examQuestions.forEach(q => {
                 const answer = form.elements[`q${q.id}`]?.value;
+                if (!answer) {
+                    missingAnswers = true;
+                }
                 if (answer === q.correct) {
                     score += q.points;
                 }
             });
-            
-            const essay = form.elements['essay']?.value || '';
-            
-            // Save to DB
+
+            if (missingAnswers) {
+                if (!confirm("⚠️ Tienes preguntas sin responder. ¿Estás seguro de que deseas enviar el examen incompleto?")) {
+                    return;
+                }
+            }
+
+            const essay = document.getElementById('essay-field')?.value || '';
+
             const studentData = {
                 name: studentName,
+                username: studentUsername,
+                examId: exam.id,
+                examTitle: exam.title,
                 score: score,
                 essay: essay,
                 completedAt: new Date().toISOString()
             };
-            
-            if (api) {
-                await api.saveStudent(studentData);
-            } else {
-                await saveStudentWeb(studentData);
-                console.log("Modo web: estudiante guardado en Firebase", studentData);
-            }
 
-            alert(`Examen enviado con éxito.\n\nAlumno: ${studentName}\nTu calificación (opción múltiple): ${score} puntos.\n(El ensayo será calificado manualmente por el profesor).`);
-            
-            if (window.parent && window.parent.showExitDialog) {
-                window.parent.showExitDialog();
-            } else {
-                alert("Modo web: el examen ha finalizado.");
+            try {
+                if (api) {
+                    await api.saveStudent(studentData);
+                    await api.addLog('EXAMEN_ENTREGADO', `[${studentName}] Entregó el examen: ${exam.title}. Calificación: ${score} pts.`);
+                } else {
+                    await saveStudentWeb(studentData);
+                    await addLogWeb('EXAMEN_ENTREGADO', `[${studentName}] Entregó el examen: ${exam.title}. Calificación: ${score} pts. (modo web)`);
+                }
+
+                showCompletionScreen(score);
+
+            } catch(e) {
+                console.error("Error al entregar examen:", e);
+                alert("Error al guardar tu calificación en el servidor.");
             }
         }
 
-        // Exponer función al entorno global para el botón HTML
+        function abandonExam() {
+            if (confirm("¿Estás seguro de que deseas abandonar el examen? Los cambios actuales no se guardarán.")) {
+                returnToDashboard();
+            }
+        }
+
+        function returnToDashboard() {
+            location.href = `dashboard.html?t=${Date.now()}`;
+        }
+
+        // Exponer al scope global para botones
+        window.selectOption = selectOption;
+        window.updateProgressBar = updateProgressBar;
         window.finishExam = finishExam;
+        window.abandonExam = abandonExam;
+        window.returnToDashboard = returnToDashboard;
+        window.triggerFraudBlock = triggerFraudBlock;
 
-        loadExam();
+        // Init
+        initExam();
 
-        // ─── Detección de Pérdida de Foco (Modo Web) ──────────────────────
-        // En modo Electron esto lo maneja el proceso principal (main.js).
-        // En modo web lo manejamos desde aquí.
+        // ─── Detección de Fraude en Modo Web ─────────────────────────────
         let blurTimeoutWeb = null;
         let examBlocked = false;
 
         function handleFocusLost() {
-            if (examBlocked || api) return; // En Electron lo maneja main.js
+            if (examBlocked || api) return;
 
-            // Guardar en Firebase
-            import('./firebase-web.js').then(({ addLogWeb }) => {
-                addLogWeb('FOCO_PERDIDO', `[${studentName}] El alumno salió de la pantalla del examen (modo web).`);
-            });
-
-            // Mostrar alerta visual
-            showWebAlert('¡ADVERTENCIA! Has salido del examen. Tienes 5 segundos para regresar o el examen se bloqueará.');
+            addLogWeb('FOCO_PERDIDO', `[${studentName}] El alumno salió de la pantalla del examen (modo web) en: ${exam ? exam.title : 'Examen'}`);
+            showWebAlert('¡ADVERTENCIA DE FRAUDE! Has salido del examen. Regresa en 5 segundos o el examen se bloqueará.');
 
             blurTimeoutWeb = setTimeout(() => {
-                import('./firebase-web.js').then(({ addLogWeb }) => {
-                    addLogWeb('EXAMEN_BLOQUEADO', `[${studentName}] El examen fue bloqueado por pérdida de foco en modo web.`);
-                });
-                examBlocked = true;
-                showWebAlert('EXAMEN BLOQUEADO. Comunícate con tu profesor para continuar.');
-                // Deshabilitar el botón de finalizar para que no pueda enviar
-                const btn = document.querySelector('.submit-btn');
-                if (btn) btn.disabled = true;
+                triggerFraudBlock();
             }, 5000);
+        }
+
+        async function triggerFraudBlock() {
+            examBlocked = true;
+            
+            const studentData = {
+                name: studentName,
+                username: studentUsername,
+                examId: exam.id,
+                examTitle: exam.title,
+                score: 0,
+                essay: 'EXAMEN ANULADO AUTOMÁTICAMENTE: Intento de fraude detectado por salir de la pantalla por más de 5 segundos.',
+                completedAt: new Date().toISOString()
+            };
+
+            try {
+                if (api) {
+                    await api.saveStudent(studentData);
+                    await api.addLog('EXAMEN_ANULADO', `[${studentName}] Examen anulado por fraude: ${exam.title}. Nota: 0.`);
+                } else {
+                    await saveStudentWeb(studentData);
+                    await addLogWeb('EXAMEN_ANULADO', `[${studentName}] Examen anulado por fraude: ${exam.title}. Nota: 0. (web)`);
+                }
+            } catch(e) {
+                console.error("Error al registrar fraude:", e);
+            }
+
+            showBlockedScreen();
+        }
+
+        function showBlockedScreen() {
+            if (blurTimeoutWeb) {
+                clearTimeout(blurTimeoutWeb);
+                blurTimeoutWeb = null;
+            }
+
+            // Deshabilitar todos los inputs del formulario
+            const inputs = document.querySelectorAll('#exam-form input, #exam-form textarea, #exam-form button');
+            inputs.forEach(i => i.disabled = true);
+
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                document.body.appendChild(alertDiv);
+            }
+
+            alertDiv.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(12, 8, 30, 0.98);
+                display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
+                z-index: 99999; color: white; text-align: center; padding: var(--space-xl);
+                font-family: 'Inter', sans-serif;
+            `;
+
+            alertDiv.innerHTML = `
+                <div class="card animate-slideUp" style="max-width: 520px; width: 90%; background: #1a1430; border: 2px solid var(--danger-text); text-align: center; padding: var(--space-2xl);">
+                    <h1 style="color: var(--danger-text); font-size: 2.2rem; margin-bottom: var(--space-md); font-weight: 800;">¡EXAMEN BLOQUEADO!</h1>
+                    <p style="color: var(--text-primary); font-size: var(--text-base); margin-bottom: var(--space-lg); line-height: 1.5;">
+                        Se ha detectado una pérdida de foco de la pantalla de evaluación por más de 5 segundos.
+                    </p>
+                    <div class="alert alert--danger mb-lg" style="justify-content: center; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3);">
+                        <div class="alert__content" style="flex: initial;">
+                            <div class="alert__title" style="font-size: var(--text-lg); margin-bottom: 0; color: #ff8585;">
+                                Calificación Registrada: <strong>0 Puntos</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn--secondary btn--lg w-full justify-center" onclick="returnToDashboard()" style="opacity: 1 !important; cursor: pointer !important; background: var(--primary-600); border: none;">
+                        Volver al Panel de Exámenes
+                    </button>
+                </div>
+            `;
+            alertDiv.style.display = 'flex';
+        }
+
+        function showCompletionScreen(score) {
+            // Deshabilitar todos los inputs del formulario
+            const inputs = document.querySelectorAll('#exam-form input, #exam-form textarea, #exam-form button');
+            inputs.forEach(i => i.disabled = true);
+
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                document.body.appendChild(alertDiv);
+            }
+
+            alertDiv.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(12, 8, 30, 0.98);
+                display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
+                z-index: 99999; color: white; text-align: center; padding: var(--space-xl);
+                font-family: 'Inter', sans-serif;
+            `;
+
+            alertDiv.innerHTML = `
+                <div class="card animate-slideUp" style="max-width: 520px; width: 90%; background: #140f2d; border: 1px solid rgba(139, 92, 246, 0.2); text-align: center; padding: var(--space-2xl);">
+                    <div style="font-size: 3rem; color: var(--success-icon); margin-bottom: var(--space-sm);">✓</div>
+                    <h1 style="color: #ffffff; font-size: 2.2rem; margin-bottom: var(--space-md); font-weight: 800;">¡EXAMEN ENTREGADO!</h1>
+                    <p style="color: var(--text-secondary); font-size: var(--text-base); margin-bottom: var(--space-lg); line-height: 1.5;">
+                        Tu evaluación ha sido guardada y registrada con éxito en el sistema.
+                    </p>
+                    <div class="alert alert--success mb-lg" style="justify-content: center; background: var(--success-bg); border-color: rgba(16, 185, 129, 0.3);">
+                        <div class="alert__content" style="flex: initial;">
+                            <div class="alert__title" style="font-size: var(--text-lg); margin-bottom: 0; color: var(--success-text);">
+                                Calificación Obtenida: <strong>${score} Puntos</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn--primary btn--lg w-full justify-center" onclick="returnToDashboard()" style="background: var(--primary-600); border: none;">
+                        Volver al Panel de Exámenes
+                    </button>
+                </div>
+            `;
+            alertDiv.style.display = 'flex';
         }
 
         function handleFocusRegained() {
@@ -206,30 +525,27 @@
             }
             if (!examBlocked) {
                 hideWebAlert();
-                import('./firebase-web.js').then(({ addLogWeb }) => {
-                    addLogWeb('FOCO_RECUPERADO', `[${studentName}] El alumno regresó al examen a tiempo (modo web).`);
-                });
+                addLogWeb('FOCO_RECUPERADO', `[${studentName}] El alumno regresó al examen a tiempo (modo web).`);
             }
         }
 
-        // Alerta visual para modo web (no tenemos el overlay del parent)
         let alertDiv = null;
         function showWebAlert(message) {
             if (!alertDiv) {
                 alertDiv = document.createElement('div');
                 alertDiv.style.cssText = `
                     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(220, 53, 69, 0.97);
+                    background: rgba(186, 12, 47, 0.98);
                     display: flex; flex-direction: column;
                     align-items: center; justify-content: center;
-                    z-index: 99999; color: white; text-align: center; padding: 20px;
+                    z-index: 99999; color: white; text-align: center; padding: var(--space-xl);
                     font-family: 'Inter', sans-serif;
                 `;
                 document.body.appendChild(alertDiv);
             }
             alertDiv.innerHTML = `
-                <h1 style="font-size: 2.5em; margin-bottom: 20px; font-weight: bold;">¡ADVERTENCIA!</h1>
-                <p style="font-size: 1.3em; max-width: 600px;">${message}</p>
+                <h1 style="font-size: 3rem; margin-bottom: var(--space-md); font-weight: 900;">¡ADVERTENCIA!</h1>
+                <p style="font-size: 1.5rem; max-width: 650px; line-height: 1.4;">${message}</p>
             `;
             alertDiv.style.display = 'flex';
         }
@@ -238,26 +554,21 @@
             if (alertDiv) alertDiv.style.display = 'none';
         }
 
-        // Escuchar cambio de visibilidad de pestaña (cambiar de tab en Chrome)
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                handleFocusLost();
-            } else {
-                handleFocusRegained();
-            }
+            if (document.hidden) handleFocusLost();
+            else handleFocusRegained();
         });
 
-        // Escuchar pérdida de foco de la ventana completa
         window.addEventListener('blur', handleFocusLost);
         window.addEventListener('focus', handleFocusRegained);
 
-        // Bloquear copiar y pegar en este frame también
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.addEventListener('copy', event => event.preventDefault());
-        document.addEventListener('cut', event => event.preventDefault());
-        document.addEventListener('paste', event => {
-            event.preventDefault();
-            alert("No se permite pegar texto en este examen.");
+        // Bloqueo de copia y pegado
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('paste', e => {
+            e.preventDefault();
+            alert("No se permite pegar texto en este examen seguro.");
         });
     </script>
 </body>
