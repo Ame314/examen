@@ -6,173 +6,464 @@
     <link rel="stylesheet" href="styles/design-system.css">
     <style>
         body {
-            padding: var(--space-xl);
+            margin: 0;
+            padding: 0;
             background-color: var(--bg-base);
+            font-family: var(--font-family);
+            color: var(--text-primary);
         }
-        .admin-header {
+
+        /* SaaS Sidebar Layout */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .admin-sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #100a26 0%, #170f38 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            padding: var(--space-xl) var(--space-md);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            font-size: var(--text-xl);
+            font-weight: 800;
+            background: linear-gradient(135deg, #c77dff, #e0aaff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--space-2xl);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            margin-bottom: var(--space-xs);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: 12px var(--space-md);
+            color: #b5a9df;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-size: var(--text-base);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            box-shadow: 0 4px 12px rgba(123, 44, 191, 0.25);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: var(--space-md);
+        }
+
+        .admin-main {
+            margin-left: 260px;
+            flex: 1;
+            padding: var(--space-xl) var(--space-2xl);
+            box-sizing: border-box;
+            background: var(--bg-base);
+        }
+
+        /* Tab Content Control */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: var(--space-xl);
+            border-bottom: 2px solid var(--primary-100);
+            padding-bottom: var(--space-md);
         }
-        .admin-grid {
+
+        .section-header h1 {
+            color: var(--primary-800);
+            font-size: var(--text-2xl);
+            margin: 0;
+        }
+
+        /* Grid utilities */
+        .admin-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: var(--space-lg);
         }
+
+        .admin-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--space-lg);
+        }
+
         .card-scrollable {
-            max-height: 450px;
+            max-height: 520px;
             overflow-y: auto;
         }
-        .full-width {
-            grid-column: 1 / -1;
-        }
+
         .question-item {
             background: var(--bg-surface);
             border: 1px solid var(--primary-100);
-            padding: var(--space-md);
+            padding: var(--space-md) var(--space-lg);
             margin-bottom: var(--space-sm);
             border-radius: var(--radius-md);
-            transition: box-shadow var(--transition-fast);
+            transition: all var(--transition-fast);
         }
+
         .question-item:hover {
             box-shadow: var(--shadow-sm);
             border-color: var(--primary-300);
         }
+
         .text-danger {
             color: var(--danger-text);
             font-weight: 600;
         }
+
+        /* Floating Badge details */
+        .badge-card {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 4px var(--space-md);
+            font-size: var(--text-xs);
+            border-radius: var(--radius-md);
+        }
     </style>
 </head>
 <body>
-    <main role="main">
-        <header class="admin-header card">
+
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar" role="complementary">
             <div>
-                <h1 style="margin: 0; color: var(--primary-700);">
-                    <span aria-hidden="true">👨‍🏫</span> Dashboard del Profesor
-                </h1>
+                <div class="sidebar-logo">
+                    SEB Panel
+                </div>
+                <nav>
+                    <ul class="sidebar-nav">
+                        <li class="nav-item">
+                            <button class="nav-link active" onclick="switchTab('resultados')" id="tab-btn-resultados">
+                                Resultados
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="switchTab('examenes')" id="tab-btn-examenes">
+                                Exámenes
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="switchTab('estudiantes')" id="tab-btn-estudiantes">
+                                Estudiantes
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="switchTab('preguntas')" id="tab-btn-preguntas">
+                                Preguntas
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" onclick="switchTab('registro')" id="tab-btn-registro">
+                                Registro de Actividad
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
             </div>
-            <button class="btn btn--secondary" onclick="exitAdmin()" aria-label="Salir del Panel de Profesor">
-                <span class="btn-icon" aria-hidden="true">🚪</span> Salir del Panel
-            </button>
-        </header>
+            
+            <div class="sidebar-footer">
+                <button class="btn btn--danger w-full justify-center" onclick="exitAdmin()">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
 
-        <div class="admin-grid">
-            <!-- Resultados -->
-            <section class="card card-scrollable" aria-labelledby="resultados-title">
-                <div class="card__header">
-                    <span class="header-icon" aria-hidden="true">📊</span>
-                    <h2 id="resultados-title">Resultados de Exámenes</h2>
+        <!-- Main Panel Content -->
+        <main class="admin-main" role="main">
+            
+            <!-- 1. PESTAÑA RESULTADOS -->
+            <section id="tab-resultados" class="tab-content active" aria-labelledby="title-resultados">
+                <div class="section-header">
+                    <h1 id="title-resultados">Resultados de Evaluaciones</h1>
+                    <span class="badge badge--success" id="results-count">0 Calificados</span>
                 </div>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Alumno</th>
-                                <th>Nota Test</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="students-table" aria-live="polite">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
+
+                <div class="card card-scrollable">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Examen</th>
+                                    <th>Nota Test</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="students-table" aria-live="polite">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
-            <!-- Alertas de Fraude y Logs -->
-            <section class="card card-scrollable" aria-labelledby="logs-title">
-                <div class="card__header">
-                    <span class="header-icon" aria-hidden="true">🚨</span>
-                    <h2 id="logs-title">Registro de Actividad (Alertas)</h2>
+            <!-- 2. PESTAÑA EXÁMENES -->
+            <section id="tab-examenes" class="tab-content" aria-labelledby="title-examenes">
+                <div class="section-header">
+                    <h1 id="title-examenes">Gestión de Exámenes</h1>
                 </div>
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Hora</th>
-                                <th>Evento</th>
-                                <th>Detalle</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-table" aria-live="polite">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
 
-            <!-- Gestión de Preguntas -->
-            <section class="card full-width" aria-labelledby="preguntas-title">
-                <div class="card__header">
-                    <span class="header-icon" aria-hidden="true">📋</span>
-                    <h2 id="preguntas-title">Gestión de Preguntas</h2>
-                </div>
-                
-                <div class="admin-grid">
-                    <div>
-                        <h3 class="mb-md">Preguntas Actuales</h3>
-                        <ul id="questions-list" style="list-style: none; padding: 0;" aria-live="polite">
+                <div class="admin-grid-2">
+                    <!-- Lista de Exámenes -->
+                    <div class="card card-scrollable">
+                        <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Exámenes Programados</h2>
+                        <div id="exams-list-container" class="flex flex-col gap-sm" aria-live="polite">
                             <!-- Dinámico -->
-                        </ul>
+                        </div>
                     </div>
 
-                    <div>
-                        <h3 class="mb-md">Añadir Nueva Pregunta</h3>
-                        <div class="card" style="background: var(--bg-base); box-shadow: none; border: 1px solid var(--primary-100);">
-                            <div class="form-group">
-                                <label class="form-label" for="new-q-text">Pregunta:</label>
-                                <input type="text" id="new-q-text" class="form-input" placeholder="Ej. ¿Cuál es el océano más grande?">
-                            </div>
-                            
-                            <div class="admin-grid" style="gap: var(--space-sm);">
-                                <div class="form-group">
-                                    <label class="form-label" for="new-q-a">Opción A:</label>
-                                    <input type="text" id="new-q-a" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="new-q-b">Opción B:</label>
-                                    <input type="text" id="new-q-b" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="new-q-c">Opción C:</label>
-                                    <input type="text" id="new-q-c" class="form-input">
-                                </div>
-                            </div>
+                    <!-- Agregar / Editar Examen -->
+                    <div class="card">
+                        <h2 id="exam-form-title" style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Programar Nuevo Examen</h2>
+                        <input type="hidden" id="edit-exam-id">
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="exam-title-input">Título del Examen:</label>
+                            <input type="text" id="exam-title-input" class="form-input" placeholder="Ej: Álgebra Básica II">
+                        </div>
 
-                            <div class="form-group" style="max-width: 200px;">
-                                <label class="form-label" for="new-q-correct">Respuesta Correcta:</label>
-                                <select id="new-q-correct" class="form-select">
-                                    <option value="a">Opción A</option>
-                                    <option value="b">Opción B</option>
-                                    <option value="c">Opción C</option>
-                                </select>
-                            </div>
-                            
-                            <button class="btn btn--primary mt-md" onclick="addQuestion()">
-                                <span class="btn-icon" aria-hidden="true">➕</span> Guardar Pregunta
+                        <div class="form-group">
+                            <label class="form-label" for="exam-desc-input">Descripción / Temario:</label>
+                            <textarea id="exam-desc-input" class="form-textarea" placeholder="Breve resumen de los contenidos evaluados..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="exam-password-input">Contraseña para Alumnos:</label>
+                            <input type="text" id="exam-password-input" class="form-input" placeholder="Ej: mate123">
+                            <span class="form-hint">Los estudiantes requerirán esta clave para comenzar el test.</span>
+                        </div>
+
+                        <div class="flex gap-md mt-lg">
+                            <button class="btn btn--secondary" onclick="clearExamForm()">Limpiar</button>
+                            <button class="btn btn--primary" onclick="saveExam()">
+                                Guardar Examen
                             </button>
                         </div>
                     </div>
                 </div>
             </section>
-        </div>
-    </main>
 
-    <!-- Modal de Edición de Alumnos -->
+            <!-- 3. PESTAÑA ESTUDIANTES -->
+            <section id="tab-estudiantes" class="tab-content" aria-labelledby="title-estudiantes">
+                <div class="section-header">
+                    <h1 id="title-estudiantes">Control de Alumnos y Accesos</h1>
+                </div>
+
+                <div class="admin-grid-2">
+                    <!-- Lista de Estudiantes -->
+                    <div class="card card-scrollable">
+                        <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Cuentas Académicas</h2>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table" aria-live="polite">
+                                    <!-- Dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Registrar Alumno -->
+                    <div class="card">
+                        <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Registrar Nuevo Usuario</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="user-name-input">Nombre Completo:</label>
+                            <input type="text" id="user-name-input" class="form-input" placeholder="Ej: Carlos Santana">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="user-username-input">Usuario (Username):</label>
+                            <input type="text" id="user-username-input" class="form-input" placeholder="Ej: carlostest">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="user-password-input">Contraseña:</label>
+                            <input type="password" id="user-password-input" class="form-input" placeholder="••••••••">
+                        </div>
+
+                        <div class="form-group" style="max-width: 200px;">
+                            <label class="form-label" for="user-role-select">Rol de Usuario:</label>
+                            <select id="user-role-select" class="form-select">
+                                <option value="student">Estudiante</option>
+                                <option value="teacher">Profesor (Docente)</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn--primary mt-md w-full justify-center" onclick="saveUser()">
+                            Crear Cuenta
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. PESTAÑA PREGUNTAS -->
+            <section id="tab-preguntas" class="tab-content" aria-labelledby="title-preguntas">
+                <div class="section-header">
+                    <h1 id="title-preguntas">Banco de Preguntas</h1>
+                    
+                    <div class="flex items-center gap-sm">
+                        <label class="form-label" for="q-exam-select" style="margin: 0;">Seleccionar Examen:</label>
+                        <select id="q-exam-select" class="form-select" style="width: 250px;" onchange="loadQuestionsForSelectedExam()">
+                            <!-- Dinámico -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-grid-2">
+                    <!-- Preguntas del examen seleccionado -->
+                    <div class="card card-scrollable">
+                        <h2 style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Preguntas Registradas</h2>
+                        <ul id="questions-list" style="list-style: none; padding: 0;" aria-live="polite">
+                            <!-- Dinámico -->
+                        </ul>
+                    </div>
+
+                    <!-- Agregar / Editar Pregunta -->
+                    <div class="card">
+                        <h2 id="q-form-title" style="font-size: var(--text-lg); margin-bottom: var(--space-md); color: var(--primary-700);">Añadir Pregunta Opción Múltiple</h2>
+                        <input type="hidden" id="edit-q-id">
+
+                        <div class="form-group">
+                            <label class="form-label" for="q-text-input">Pregunta / Enunciado:</label>
+                            <input type="text" id="q-text-input" class="form-input" placeholder="Ej: ¿Cuál es el valor de Pi?">
+                        </div>
+
+                        <div class="admin-grid-3" style="gap: var(--space-xs);">
+                            <div class="form-group">
+                                <label class="form-label" for="q-a-input">Opción A:</label>
+                                <input type="text" id="q-a-input" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="q-b-input">Opción B:</label>
+                                <input type="text" id="q-b-input" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="q-c-input">Opción C:</label>
+                                <input type="text" id="q-c-input" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="admin-grid-2" style="gap: var(--space-sm);">
+                            <div class="form-group">
+                                <label class="form-label" for="q-correct-select">Respuesta Correcta:</label>
+                                <select id="q-correct-select" class="form-select">
+                                    <option value="a">Opción A</option>
+                                    <option value="b">Opción B</option>
+                                    <option value="c">Opción C</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="q-points-input">Puntos:</label>
+                                <input type="number" id="q-points-input" class="form-input" min="1" value="5">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-md mt-lg">
+                            <button class="btn btn--secondary" onclick="clearQuestionForm()">Limpiar</button>
+                            <button class="btn btn--primary" onclick="saveQuestion()">
+                                Guardar Pregunta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. PESTAÑA REGISTRO -->
+            <section id="tab-registro" class="tab-content" aria-labelledby="title-registro">
+                <div class="section-header">
+                    <h1 id="title-registro">Historial de Seguridad LockDown</h1>
+                </div>
+
+                <div class="card card-scrollable">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Evento</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table" aria-live="polite">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal de Edición de Calificaciones Alumnos -->
     <div id="edit-modal" class="overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
         <div class="modal animate-slideUp" style="text-align: left; max-width: 500px;">
             <div class="card__header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
-                <span class="header-icon" aria-hidden="true">✏️</span>
-                <h2 id="modal-edit-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Editar Datos del Alumno</h2>
+                <h2 id="modal-edit-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Editar Calificación del Alumno</h2>
             </div>
             <input type="hidden" id="edit-student-id">
             
             <div class="form-group">
                 <label class="form-label" for="edit-student-name">Nombre Completo:</label>
-                <input type="text" id="edit-student-name" class="form-input" placeholder="Nombre del alumno">
+                <input type="text" id="edit-student-name" class="form-input" readonly style="background: var(--bg-base); cursor: not-allowed;">
             </div>
             
             <div class="form-group">
@@ -181,146 +472,190 @@
             </div>
             
             <div class="flex gap-md mt-lg justify-center">
-                <button class="btn btn--secondary" onclick="closeEditModal()" aria-label="Cancelar y cerrar diálogo">
-                    Cancelar
-                </button>
-                <button class="btn btn--primary" onclick="saveStudentEdit()" aria-label="Guardar cambios del alumno">
-                    <span class="btn-icon" aria-hidden="true">💾</span> Guardar Cambios
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Edición de Preguntas -->
-    <div id="edit-question-modal" class="overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-edit-q-title">
-        <div class="modal animate-slideUp" style="text-align: left; max-width: 550px;">
-            <div class="card__header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
-                <span class="header-icon" aria-hidden="true">✏️</span>
-                <h2 id="modal-edit-q-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Editar Pregunta</h2>
-            </div>
-            <input type="hidden" id="edit-q-id">
-            
-            <div class="form-group">
-                <label class="form-label" for="edit-q-text">Pregunta:</label>
-                <input type="text" id="edit-q-text" class="form-input" placeholder="Pregunta">
-            </div>
-            
-            <div class="admin-grid" style="gap: var(--space-sm); grid-template-columns: 1fr 1fr 1fr; margin-bottom: var(--space-md);">
-                <div class="form-group">
-                    <label class="form-label" for="edit-q-a">Opción A:</label>
-                    <input type="text" id="edit-q-a" class="form-input" placeholder="Opción A">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="edit-q-b">Opción B:</label>
-                    <input type="text" id="edit-q-b" class="form-input" placeholder="Opción B">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="edit-q-c">Opción C:</label>
-                    <input type="text" id="edit-q-c" class="form-input" placeholder="Opción C">
-                </div>
-            </div>
-
-            <div class="form-group" style="max-width: 250px;">
-                <label class="form-label" for="edit-q-correct">Respuesta Correcta:</label>
-                <select id="edit-q-correct" class="form-select">
-                    <option value="a">Opción A</option>
-                    <option value="b">Opción B</option>
-                    <option value="c">Opción C</option>
-                </select>
-            </div>
-            
-            <div class="flex gap-md mt-lg justify-center">
-                <button class="btn btn--secondary" onclick="closeEditQuestionModal()" aria-label="Cancelar y cerrar diálogo">
-                    Cancelar
-                </button>
-                <button class="btn btn--primary" onclick="saveQuestionEdit()" aria-label="Guardar cambios de la pregunta">
-                    <span class="btn-icon" aria-hidden="true">💾</span> Guardar Cambios
+                <button class="btn btn--secondary" onclick="closeEditModal()">Cancelar</button>
+                <button class="btn btn--primary" onclick="saveStudentEdit()">
+                    Guardar Cambios
                 </button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { getDBWeb, addQuestionWeb, updateStudentWeb, updateQuestionWeb, deleteQuestionWeb } from './firebase-web.js';
+        import { 
+            getDBWeb, 
+            addQuestionWeb, 
+            updateStudentWeb, 
+            updateQuestionWeb, 
+            deleteQuestionWeb,
+            saveExamWeb,
+            updateExamWeb,
+            deleteExamWeb,
+            saveUserWeb,
+            deleteUserWeb
+        } from './firebase-web.js';
 
         let db = null;
         const api = window.parent.electronAPI;
+
+        // Cambiar pestañas dinámicamente
+        function switchTab(tabId) {
+            const tabs = ['resultados', 'examenes', 'estudiantes', 'preguntas', 'registro'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('active');
+                document.getElementById(`tab-btn-${t}`).classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+        }
 
         async function loadData() {
             try {
                 if (api) {
                     db = await api.getDB();
                 } else {
-                    // Modo web: conexión directa a Firebase
                     db = await getDBWeb();
                 }
+                
+                renderResults();
+                renderExams();
                 renderStudents();
+                renderQuestionsDropdown();
+                loadQuestionsForSelectedExam();
                 renderLogs();
-                renderQuestions();
             } catch(e) {
-                console.error('Error cargando datos:', e);
+                console.error("Error al cargar datos en admin:", e);
             }
         }
 
-        function renderStudents() {
+        // ─── RENDERS ─────────────────────────────────────────────────
+        
+        function renderResults() {
             const tbody = document.getElementById('students-table');
+            const resultsCount = document.getElementById('results-count');
             tbody.innerHTML = '';
+            
             if(!db.students) db.students = [];
-            db.students.forEach(s => {
+            
+            // Sort by examTitle (alphabetical ascending) and completedAt (date descending)
+            const sortedStudents = [...db.students].sort((a, b) => {
+                const titleA = (a.examTitle || 'Historia Básica').toLowerCase();
+                const titleB = (b.examTitle || 'Historia Básica').toLowerCase();
+                const compTitle = titleA.localeCompare(titleB);
+                if (compTitle !== 0) return compTitle;
+                
+                const dateA = a.completedAt ? new Date(a.completedAt) : new Date(0);
+                const dateB = b.completedAt ? new Date(b.completedAt) : new Date(0);
+                return dateB - dateA;
+            });
+
+            sortedStudents.forEach(s => {
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${s.name}</strong></td>
+                        <td>${s.examTitle || 'Historia Básica'}</td>
                         <td><span class="badge badge--success">${s.score} pts</span></td>
-                        <td>Completado</td>
+                        <td>${s.completedAt ? new Date(s.completedAt).toLocaleString() : 'N/A'}</td>
                         <td>
-                            <button class="btn btn--secondary" style="padding: var(--space-xs) var(--space-sm); font-size: var(--text-xs);" onclick="openEditModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.score})" aria-label="Editar alumno ${s.name}">
-                                ✏️ Editar
+                            <button class="btn btn--secondary" style="padding: 4px 10px; font-size: var(--text-xs);" onclick="openEditModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.score})">
+                                Corregir
                             </button>
                         </td>
                     </tr>
                 `;
             });
+            
+            resultsCount.textContent = `${db.students.length} Calificados`;
+            
             if(db.students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay exámenes completados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No se registran exámenes entregados aún.</td></tr>';
             }
         }
 
-        function renderLogs() {
-            const tbody = document.getElementById('logs-table');
+        function renderExams() {
+            const container = document.getElementById('exams-list-container');
+            container.innerHTML = '';
+
+            if(!db.exams) db.exams = [];
+            db.exams.forEach(exam => {
+                container.innerHTML += `
+                    <div class="card" style="padding: var(--space-md); background: var(--bg-surface); border: 1px solid var(--primary-100);">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 style="margin: 0; font-size: var(--text-base); color: var(--primary-800);">${exam.title}</h3>
+                                <p style="font-size: var(--text-xs); color: var(--text-secondary); margin: 4px 0 0 0;">Clave: <strong>${exam.password}</strong></p>
+                            </div>
+                            <div class="flex gap-sm">
+                                <button class="btn btn--secondary" style="padding: 4px 8px; font-size: var(--text-xs);" onclick="editExam('${exam.id}', '${exam.title.replace(/'/g, "\\'")}', '${exam.description.replace(/'/g, "\\'")}', '${exam.password}')">Editar</button>
+                                <button class="btn btn--danger" style="padding: 4px 8px; font-size: var(--text-xs);" onclick="deleteExam('${exam.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if(db.exams.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-md">No hay exámenes registrados.</p>';
+            }
+        }
+
+        function renderStudents() {
+            const tbody = document.getElementById('users-table');
             tbody.innerHTML = '';
-            if(!db.logs) db.logs = [];
-            
-            const reversedLogs = [...db.logs].reverse();
-            reversedLogs.forEach(l => {
-                const tipo = l.tipoEvento || l.event || ''; // Soporte para formato anterior
-                const isDanger = tipo.includes('FRAUDE') || tipo.includes('FOCO_PERDIDO');
-                const time = new Date(l.timestamp).toLocaleTimeString();
-                
+
+            if(!db.users) db.users = [];
+            db.users.forEach(user => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="${isDanger ? 'text-danger' : ''}">${time}</td>
+                        <td><strong>${user.name}</strong></td>
+                        <td>@${user.username}</td>
+                        <td><span class="badge ${user.role === 'teacher' ? 'badge--danger' : 'badge--info'}">${user.role === 'teacher' ? 'Profesor' : 'Alumno'}</span></td>
                         <td>
-                            <span class="badge ${isDanger ? 'badge--danger' : 'badge--warning'}">
-                                ${tipo}
-                            </span>
+                            <button class="btn btn--danger" style="padding: 4px 10px; font-size: var(--text-xs);" onclick="deleteUser('${user.id}')">
+                                Eliminar
+                            </button>
                         </td>
-                        <td class="${isDanger ? 'text-danger' : ''}">${l.detail}</td>
                     </tr>
                 `;
             });
-            if(db.logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay registros de actividad.</td></tr>';
+
+            if(db.users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay usuarios registrados.</td></tr>';
             }
         }
 
-        function renderQuestions() {
-            const ul = document.getElementById('questions-list');
-            ul.innerHTML = '';
+        function renderQuestionsDropdown() {
+            const select = document.getElementById('q-exam-select');
+            const originalVal = select.value;
+            select.innerHTML = '';
+
+            if(!db.exams) db.exams = [];
+            db.exams.forEach(exam => {
+                select.innerHTML += `<option value="${exam.id}">${exam.title}</option>`;
+            });
+
+            if (originalVal && Array.from(select.options).some(o => o.value === originalVal)) {
+                select.value = originalVal;
+            }
+        }
+
+        function loadQuestionsForSelectedExam() {
+            const select = document.getElementById('q-exam-select');
+            const examId = select.value;
+            const container = document.getElementById('questions-list');
+            container.innerHTML = '';
+
+            if(!examId) {
+                container.innerHTML = '<li class="text-muted text-center py-md">Selecciona o crea un examen primero.</li>';
+                return;
+            }
+
             if(!db.questions) db.questions = [];
-            db.questions.forEach((q, index) => {
-                let optionsHtml = '<em>Opciones no disponibles</em>';
-                if (q.options) {
-                    optionsHtml = Object.entries(q.options).map(([k, v]) => `${k.toUpperCase()}) ${v}`).join('<br>');
+            const filtered = db.questions.filter(q => q.examId === examId);
+
+            filtered.forEach((q, index) => {
+                let optionsHtml = '';
+                if(q.options) {
+                    optionsHtml = Object.entries(q.options).map(([k, v]) => `${k.toUpperCase()}) ${v}`).join(' &nbsp;•&nbsp; ');
                 }
 
                 const qTextEscaped = q.text.replace(/'/g, "\\'");
@@ -328,70 +663,270 @@
                 const optBEscaped = q.options && q.options.b ? q.options.b.replace(/'/g, "\\'") : '';
                 const optCEscaped = q.options && q.options.c ? q.options.c.replace(/'/g, "\\'") : '';
 
-                ul.innerHTML += `
+                container.innerHTML += `
                     <li class="question-item">
                         <div style="margin-bottom: var(--space-xs);">
                             <strong>${index + 1}. ${q.text}</strong>
                         </div>
-                        <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">
+                        <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-xs);">
                             ${optionsHtml}
                         </div>
                         <div class="flex justify-between items-center" style="font-size: var(--text-xs); margin-top: var(--space-xs);">
-                            <span class="badge badge--success">Correcta: ${q.correct ? q.correct.toUpperCase() : 'N/A'}</span>
+                            <span class="badge badge--success">Correcta: ${q.correct ? q.correct.toUpperCase() : 'A'} | Puntos: ${q.points || 5}</span>
                             <div class="flex gap-sm">
-                                <button class="btn btn--secondary" style="padding: 2px 6px; font-size: var(--text-xs);" onclick="openEditQuestionModal('${q.id}', '${qTextEscaped}', '${optAEscaped}', '${optBEscaped}', '${optCEscaped}', '${q.correct}')" aria-label="Editar pregunta ${index + 1}">
-                                    ✏️
+                                <button class="btn btn--secondary" style="padding: 4px 8px; font-size: var(--text-xs);" onclick="editQuestion('${q.id}', '${qTextEscaped}', '${optAEscaped}', '${optBEscaped}', '${optCEscaped}', '${q.correct}', ${q.points || 5})">
+                                    Editar
                                 </button>
-                                <button class="btn btn--danger" style="padding: 2px 6px; font-size: var(--text-xs);" onclick="deleteQuestion('${q.id}')" aria-label="Eliminar pregunta ${index + 1}">
-                                    🗑️
+                                <button class="btn btn--danger" style="padding: 4px 8px; font-size: var(--text-xs);" onclick="deleteQuestion('${q.id}')">
+                                    Eliminar
                                 </button>
                             </div>
                         </div>
                     </li>
                 `;
             });
-            if(db.questions.length === 0) {
-                ul.innerHTML = '<li class="text-muted text-center py-md">No hay preguntas registradas.</li>';
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<li class="text-muted text-center py-md">No hay preguntas registradas en este examen.</li>';
             }
         }
 
-        async function addQuestion() {
-            const text = document.getElementById('new-q-text').value.trim();
-            const a = document.getElementById('new-q-a').value.trim();
-            const b = document.getElementById('new-q-b').value.trim();
-            const c = document.getElementById('new-q-c').value.trim();
-            const correct = document.getElementById('new-q-correct').value;
+        function renderLogs() {
+            const tbody = document.getElementById('logs-table');
+            tbody.innerHTML = '';
+            if(!db.logs) db.logs = [];
 
-            if (!text || !a || !b || !c) {
-                alert("⚠️ Por favor llena todos los campos de la pregunta.");
+            const reversed = [...db.logs].reverse();
+            reversed.forEach(l => {
+                const isDanger = l.tipoEvento && (l.tipoEvento.includes('FRAUDE') || l.tipoEvento.includes('FOCO'));
+                const time = l.timestamp ? new Date(l.timestamp).toLocaleTimeString() : 'N/A';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="${isDanger ? 'text-danger' : ''}">${time}</td>
+                        <td><span class="badge ${isDanger ? 'badge--danger' : 'badge--warning'}">${l.tipoEvento}</span></td>
+                        <td class="${isDanger ? 'text-danger' : ''}">${l.detail}</td>
+                    </tr>
+                `;
+            });
+
+            if(db.logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Sin registros de eventos de seguridad.</td></tr>';
+            }
+        }
+
+        // ─── CRUD ACCIONES EXÁMENES ───────────────────────────────────
+
+        async function saveExam() {
+            const id = document.getElementById('edit-exam-id').value;
+            const title = document.getElementById('exam-title-input').value.trim();
+            const description = document.getElementById('exam-desc-input').value.trim();
+            const password = document.getElementById('exam-password-input').value.trim();
+
+            if (!title || !password) {
+                alert("Por favor ingresa el título y la contraseña del examen.");
                 return;
             }
 
-            const newQ = {
+            const examData = { title, description, password, createdAt: new Date().toISOString() };
+
+            try {
+                if (id) {
+                    if (api) {
+                        await api.updateExam(id, examData);
+                    } else {
+                        await updateExamWeb(id, examData);
+                    }
+                    alert("Examen actualizado con éxito.");
+                } else {
+                    if (api) {
+                        await api.addExam(examData);
+                    } else {
+                        await saveExamWeb(examData);
+                    }
+                    alert("Examen programado con éxito.");
+                }
+                clearExamForm();
+                await loadData();
+            } catch(e) {
+                console.error("Error al guardar examen:", e);
+                alert("Error al guardar el examen.");
+            }
+        }
+
+        function editExam(id, title, desc, pwd) {
+            document.getElementById('edit-exam-id').value = id;
+            document.getElementById('exam-title-input').value = title;
+            document.getElementById('exam-desc-input').value = desc;
+            document.getElementById('exam-password-input').value = pwd;
+            document.getElementById('exam-form-title').textContent = "Editar Examen";
+        }
+
+        async function deleteExam(id) {
+            if(!confirm("¿Estás seguro de que deseas eliminar este examen? Se eliminarán en cascada todas sus preguntas asociadas.")) return;
+            try {
+                if (api) {
+                    await api.deleteExam(id);
+                } else {
+                    await deleteExamWeb(id);
+                }
+                alert("Examen eliminado.");
+                await loadData();
+            } catch(e) {
+                console.error("Error al eliminar examen:", e);
+            }
+        }
+
+        function clearExamForm() {
+            document.getElementById('edit-exam-id').value = '';
+            document.getElementById('exam-title-input').value = '';
+            document.getElementById('exam-desc-input').value = '';
+            document.getElementById('exam-password-input').value = '';
+            document.getElementById('exam-form-title').textContent = "Programar Nuevo Examen";
+        }
+
+        // ─── CRUD ACCIONES USUARIOS ───────────────────────────────────
+
+        async function saveUser() {
+            const name = document.getElementById('user-name-input').value.trim();
+            const username = document.getElementById('user-username-input').value.trim();
+            const password = document.getElementById('user-password-input').value;
+            const role = document.getElementById('user-role-select').value;
+
+            if(!name || !username || !password) {
+                alert("Por favor completa todos los campos del nuevo usuario.");
+                return;
+            }
+
+            const userData = { name, username, password, role };
+
+            try {
+                if (api) {
+                    await api.addUser(userData);
+                } else {
+                    await saveUserWeb(userData);
+                }
+                alert("Usuario registrado.");
+                
+                // Limpiar
+                document.getElementById('user-name-input').value = '';
+                document.getElementById('user-username-input').value = '';
+                document.getElementById('user-password-input').value = '';
+                
+                await loadData();
+            } catch(e) {
+                console.error("Error al guardar usuario:", e);
+            }
+        }
+
+        async function deleteUser(id) {
+            if(!confirm("¿Deseas eliminar permanentemente esta cuenta de acceso?")) return;
+            try {
+                if(api) {
+                    await api.deleteUser(id);
+                } else {
+                    await deleteUserWeb(id);
+                }
+                alert("Cuenta eliminada.");
+                await loadData();
+            } catch(e) {
+                console.error("Error al eliminar usuario:", e);
+            }
+        }
+
+        // ─── CRUD ACCIONES PREGUNTAS ──────────────────────────────────
+
+        async function saveQuestion() {
+            const select = document.getElementById('q-exam-select');
+            const examId = select.value;
+
+            if (!examId) {
+                alert("Selecciona o crea un examen en el banco antes de añadir una pregunta.");
+                return;
+            }
+
+            const id = document.getElementById('edit-q-id').value;
+            const text = document.getElementById('q-text-input').value.trim();
+            const a = document.getElementById('q-a-input').value.trim();
+            const b = document.getElementById('q-b-input').value.trim();
+            const c = document.getElementById('q-c-input').value.trim();
+            const correct = document.getElementById('q-correct-select').value;
+            const points = parseInt(document.getElementById('q-points-input').value, 10) || 5;
+
+            if(!text || !a || !b || !c) {
+                alert("Por favor completa el enunciado y las tres opciones.");
+                return;
+            }
+
+            const qData = {
+                examId,
                 text,
                 options: { a, b, c },
                 correct,
-                points: 5 // Valor por defecto
+                points
             };
 
-            if (api) {
-                await api.addQuestion(newQ);
-            } else {
-                await addQuestionWeb(newQ);
+            try {
+                if (id) {
+                    if (api) {
+                        await api.updateQuestion(id, qData);
+                    } else {
+                        await updateQuestionWeb(id, qData);
+                    }
+                    alert("Pregunta actualizada.");
+                } else {
+                    if (api) {
+                        await api.addQuestion(qData);
+                    } else {
+                        await addQuestionWeb(qData);
+                    }
+                    alert("Pregunta guardada.");
+                }
+                clearQuestionForm();
+                await loadData();
+            } catch(e) {
+                console.error("Error al guardar pregunta:", e);
             }
-            
-            // Recargar datos para ver la nueva pregunta
-            await loadData();
-            
-            // Limpiar formulario
-            document.getElementById('new-q-text').value = '';
-            document.getElementById('new-q-a').value = '';
-            document.getElementById('new-q-b').value = '';
-            document.getElementById('new-q-c').value = '';
-            document.getElementById('new-q-correct').value = 'a';
-            
-            alert("✅ Pregunta añadida con éxito.");
         }
+
+        function editQuestion(id, text, a, b, c, correct, points) {
+            document.getElementById('edit-q-id').value = id;
+            document.getElementById('q-text-input').value = text;
+            document.getElementById('q-a-input').value = a;
+            document.getElementById('q-b-input').value = b;
+            document.getElementById('q-c-input').value = c;
+            document.getElementById('q-correct-select').value = correct;
+            document.getElementById('q-points-input').value = points;
+            document.getElementById('q-form-title').textContent = "Editar Pregunta";
+        }
+
+        async function deleteQuestion(id) {
+            if(!confirm("¿Eliminar esta pregunta?")) return;
+            try {
+                if (api) {
+                    await api.deleteQuestion(id);
+                } else {
+                    await deleteQuestionWeb(id);
+                }
+                alert("Pregunta eliminada.");
+                await loadData();
+            } catch(e) {
+                console.error("Error al eliminar pregunta:", e);
+            }
+        }
+
+        function clearQuestionForm() {
+            document.getElementById('edit-q-id').value = '';
+            document.getElementById('q-text-input').value = '';
+            document.getElementById('q-a-input').value = '';
+            document.getElementById('q-b-input').value = '';
+            document.getElementById('q-c-input').value = '';
+            document.getElementById('q-correct-select').value = 'a';
+            document.getElementById('q-points-input').value = '5';
+            document.getElementById('q-form-title').textContent = "Añadir Pregunta Opción Múltiple";
+        }
+
+        // ─── EDICIÓN DE CALIFICACIONES DE ALUMNOS (MODAL) ─────────────
 
         function openEditModal(id, name, score) {
             document.getElementById('edit-student-id').value = id;
@@ -406,121 +941,54 @@
 
         async function saveStudentEdit() {
             const id = document.getElementById('edit-student-id').value;
-            const name = document.getElementById('edit-student-name').value.trim();
-            const scoreVal = document.getElementById('edit-student-score').value;
-            const score = parseInt(scoreVal, 10);
+            const score = parseInt(document.getElementById('edit-student-score').value, 10);
 
-            if (!name || isNaN(score) || score < 0) {
-                alert("⚠️ Por favor ingresa un nombre válido y una calificación mayor o igual a 0.");
+            if(isNaN(score) || score < 0) {
+                alert("Ingresa un puntaje válido.");
                 return;
             }
 
             try {
-                const updatedData = { name, score };
                 if (api) {
-                    await api.updateStudent(id, updatedData);
+                    await api.updateStudent(id, { score });
                 } else {
-                    await updateStudentWeb(id, updatedData);
+                    await updateStudentWeb(id, { score });
                 }
-                
-                alert("✅ Alumno actualizado con éxito.");
+                alert("Calificación corregida con éxito.");
                 closeEditModal();
                 await loadData();
             } catch(e) {
-                console.error("Error al actualizar alumno:", e);
-                alert("❌ Error al guardar los cambios.");
+                console.error("Error al corregir nota:", e);
             }
         }
 
-        function openEditQuestionModal(id, text, a, b, c, correct) {
-            document.getElementById('edit-q-id').value = id;
-            document.getElementById('edit-q-text').value = text;
-            document.getElementById('edit-q-a').value = a;
-            document.getElementById('edit-q-b').value = b;
-            document.getElementById('edit-q-c').value = c;
-            document.getElementById('edit-q-correct').value = correct;
-            document.getElementById('edit-question-modal').style.display = 'flex';
-        }
-
-        function closeEditQuestionModal() {
-            document.getElementById('edit-question-modal').style.display = 'none';
-        }
-
-        async function saveQuestionEdit() {
-            const id = document.getElementById('edit-q-id').value;
-            const text = document.getElementById('edit-q-text').value.trim();
-            const a = document.getElementById('edit-q-a').value.trim();
-            const b = document.getElementById('edit-q-b').value.trim();
-            const c = document.getElementById('edit-q-c').value.trim();
-            const correct = document.getElementById('edit-q-correct').value;
-
-            if (!text || !a || !b || !c) {
-                alert("⚠️ Por favor llena todos los campos de la pregunta.");
-                return;
-            }
-
-            try {
-                const updatedData = {
-                    text,
-                    options: { a, b, c },
-                    correct
-                };
-
-                if (api) {
-                    await api.updateQuestion(id, updatedData);
-                } else {
-                    await updateQuestionWeb(id, updatedData);
-                }
-
-                alert("✅ Pregunta actualizada con éxito.");
-                closeEditQuestionModal();
-                await loadData();
-            } catch(e) {
-                console.error("Error al actualizar pregunta:", e);
-                alert("❌ Error al guardar los cambios.");
-            }
-        }
-
-        async function deleteQuestion(id) {
-            if (!confirm("⚠️ ¿Estás seguro de que deseas eliminar esta pregunta?")) {
-                return;
-            }
-
-            try {
-                if (api) {
-                    await api.deleteQuestion(id);
-                } else {
-                    await deleteQuestionWeb(id);
-                }
-
-                alert("✅ Pregunta eliminada con éxito.");
-                await loadData();
-            } catch(e) {
-                console.error("Error al eliminar pregunta:", e);
-                alert("❌ Error al eliminar la pregunta.");
-            }
-        }
-
+        // ─── LOGOUT / SALIR ───────────────────────────────────────────
+        
         function exitAdmin() {
-            if (window.parent && window.parent.showExitDialog) {
-                window.parent.showExitDialog();
+            if (window.parent && window.parent.location) {
+                window.parent.location.reload();
             } else {
-                alert("Modo web: cerrando sesión");
                 location.reload();
             }
         }
 
-        // Exponer funciones al scope global para botones HTML
-        window.loadData = loadData;
-        window.addQuestion = addQuestion;
-        window.exitAdmin = exitAdmin;
+        // Exponer al scope global para botones inline
+        window.switchTab = switchTab;
+        window.saveExam = saveExam;
+        window.editExam = editExam;
+        window.deleteExam = deleteExam;
+        window.clearExamForm = clearExamForm;
+        window.saveUser = saveUser;
+        window.deleteUser = deleteUser;
+        window.loadQuestionsForSelectedExam = loadQuestionsForSelectedExam;
+        window.saveQuestion = saveQuestion;
+        window.editQuestion = editQuestion;
+        window.deleteQuestion = deleteQuestion;
+        window.clearQuestionForm = clearQuestionForm;
         window.openEditModal = openEditModal;
         window.closeEditModal = closeEditModal;
         window.saveStudentEdit = saveStudentEdit;
-        window.openEditQuestionModal = openEditQuestionModal;
-        window.closeEditQuestionModal = closeEditQuestionModal;
-        window.saveQuestionEdit = saveQuestionEdit;
-        window.deleteQuestion = deleteQuestion;
+        window.exitAdmin = exitAdmin;
 
         // Init
         loadData();

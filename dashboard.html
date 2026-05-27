@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Estudiante</title>
+    <link rel="stylesheet" href="styles/design-system.css">
+    <style>
+        body {
+            padding: var(--space-xl);
+            background-color: var(--bg-base);
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .student-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: var(--text-lg);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .welcome-text h1 {
+            font-size: var(--text-2xl);
+            color: var(--primary-800);
+            margin: 0;
+        }
+
+        .welcome-text p {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .exams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-lg);
+            margin-top: var(--space-md);
+        }
+
+        .exam-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 240px;
+        }
+
+        .exam-card__body h3 {
+            color: var(--text-primary);
+            font-size: var(--text-lg);
+            margin-bottom: var(--space-xs);
+        }
+
+        .exam-card__body p {
+            font-size: var(--text-sm);
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.5;
+        }
+
+        .exam-card__footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        /* Overlay modal contraseña */
+        .modal-input-container {
+            margin-top: var(--space-md);
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <main role="main">
+        <header class="dashboard-header card">
+            <div class="student-profile">
+                <div class="avatar" id="student-avatar" aria-hidden="true">U</div>
+                <div class="welcome-text">
+                    <h1 id="welcome-title">Bienvenido, Estudiante</h1>
+                    <p id="welcome-subtitle">Panel de Evaluaciones Académicas</p>
+                </div>
+            </div>
+            <button class="btn btn--secondary" onclick="logout()" aria-label="Cerrar sesión">
+                Cerrar Sesión
+            </button>
+        </header>
+
+        <section aria-labelledby="exams-section-title">
+            <div class="flex justify-between items-center mb-lg">
+                <h2 id="exams-section-title" style="color: var(--primary-700); margin: 0;">Mis Exámenes Disponibles</h2>
+                <span class="badge badge--info" id="exams-count">0 Exámenes</span>
+            </div>
+
+            <div class="exams-grid" id="exams-container" aria-live="polite">
+                <!-- Dinámico -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para ingresar contraseña del examen -->
+    <div id="password-modal" class="overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal animate-slideUp">
+            <div class="card__header" style="margin-bottom: var(--space-md); padding-bottom: var(--space-sm);">
+                <h2 id="modal-title" style="margin: 0; font-size: var(--text-lg); color: var(--primary-700);">Acceso al Examen</h2>
+            </div>
+            <p id="modal-desc" style="color: var(--text-secondary); font-size: var(--text-sm);">Este examen está protegido. Solicita la contraseña a tu profesor para comenzar.</p>
+            
+            <input type="hidden" id="selected-exam-id">
+
+            <div class="form-group modal-input-container">
+                <label class="form-label" for="exam-password">Contraseña de acceso:</label>
+                <input type="password" id="exam-password" class="form-input" placeholder="••••••••" required>
+            </div>
+
+            <div id="modal-error" class="alert alert--danger mt-md" style="display: none; padding: var(--space-sm) var(--space-md);">
+                <div class="alert__content">
+                    <div class="alert__title">Error de validación</div>
+                    Contraseña de examen incorrecta.
+                </div>
+            </div>
+
+            <div class="flex gap-md mt-lg justify-center">
+                <button class="btn btn--secondary" onclick="closePasswordModal()">Cancelar</button>
+                <button class="btn btn--primary" onclick="validateExamPassword()">
+                    Iniciar Examen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getDBWeb } from './firebase-web.js';
+
+        let db = null;
+        const api = window.parent.electronAPI;
+
+        // Cargar credenciales del alumno
+        const name = sessionStorage.getItem('studentName') || 'Estudiante';
+        const username = sessionStorage.getItem('studentUsername') || 'estudiante';
+
+        // Inicializar perfil
+        document.getElementById('welcome-title').textContent = `Bienvenido, ${name}`;
+        document.getElementById('welcome-subtitle').textContent = `Usuario: @${username} • Entorno de Examen Seguro`;
+        document.getElementById('student-avatar').textContent = name.charAt(0).toUpperCase();
+
+        async function loadDashboard() {
+            try {
+                if (api) {
+                    db = await api.getDB();
+                } else {
+                    db = await getDBWeb();
+                }
+                renderExams();
+            } catch(e) {
+                console.error("Error al cargar dashboard de estudiante:", e);
+            }
+        }
+
+        function renderExams() {
+            const container = document.getElementById('exams-container');
+            const countBadge = document.getElementById('exams-count');
+            container.innerHTML = '';
+
+            if(!db.exams) db.exams = [];
+            if(!db.students) db.students = [];
+
+            // Filtrar resultados del alumno actual
+            const studentResults = db.students.filter(s => s.name === name || s.username === username);
+
+            db.exams.forEach(exam => {
+                // Verificar si ya completó este examen
+                const result = studentResults.find(r => r.examId === exam.id);
+                const isCompleted = !!result;
+
+                let cardActionHtml = '';
+                let statusBadgeHtml = '';
+
+                if (isCompleted) {
+                    statusBadgeHtml = `<span class="badge badge--success">Completado (${result.score} pts)</span>`;
+                    cardActionHtml = `
+                        <button class="btn btn--secondary" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            ✓ Realizado
+                        </button>
+                    `;
+                } else {
+                    statusBadgeHtml = `<span class="badge badge--warning">Pendiente</span>`;
+                    cardActionHtml = `
+                        <button class="btn btn--primary" onclick="openPasswordModal('${exam.id}')" aria-label="Rendir examen ${exam.title}">
+                            Rendir Examen
+                        </button>
+                    `;
+                }
+
+                // Contar preguntas de este examen
+                const qCount = db.questions ? db.questions.filter(q => q.examId === exam.id).length : 0;
+
+                container.innerHTML += `
+                    <article class="card exam-card animate-fadeIn">
+                        <div class="exam-card__body">
+                            <div class="flex justify-between items-center mb-xs">
+                                ${statusBadgeHtml}
+                                <span class="badge badge--info">${qCount} Preguntas</span>
+                            </div>
+                            <h3>${exam.title}</h3>
+                            <p>${exam.description || 'Sin descripción detallada por el momento.'}</p>
+                        </div>
+                        <div class="exam-card__footer">
+                            <span style="font-size: var(--text-xs); color: var(--text-muted);">
+                                Docente: Autorizado
+                            </span>
+                            ${cardActionHtml}
+                        </div>
+                    </article>
+                `;
+            });
+
+            countBadge.textContent = `${db.exams.length} Exámenes`;
+
+            if(db.exams.length === 0) {
+                container.innerHTML = `
+                    <div class="card w-full text-center" style="grid-column: 1 / -1; padding: var(--space-2xl);">
+                        <p class="text-muted" style="margin: 0;">No hay exámenes disponibles programados por el profesor.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openPasswordModal(examId) {
+            const modal = document.getElementById('password-modal');
+            const selectedExam = db.exams.find(e => e.id === examId);
+            if (!selectedExam) return;
+
+            document.getElementById('selected-exam-id').value = examId;
+            document.getElementById('modal-title').textContent = `Rendir: ${selectedExam.title}`;
+            document.getElementById('exam-password').value = '';
+            document.getElementById('modal-error').style.display = 'none';
+            modal.style.display = 'flex';
+            document.getElementById('exam-password').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').style.display = 'none';
+        }
+
+        async function validateExamPassword() {
+            const examId = document.getElementById('selected-exam-id').value;
+            const inputPwd = document.getElementById('exam-password').value;
+            const errorDiv = document.getElementById('modal-error');
+
+            const selectedExam = db.exams.find(e => e.id === examId);
+            if (!selectedExam) return;
+
+            if (inputPwd === selectedExam.password) {
+                closePasswordModal();
+                // Redirigir al examen pasando el nombre y el examId
+                location.href = `exam.html?examId=${examId}&name=${encodeURIComponent(name)}&t=${Date.now()}`;
+            } else {
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            if (window.parent && window.parent.location) {
+                window.parent.location.reload();
+            } else {
+                location.reload();
+            }
+        }
+
+        // Exponer al scope global para botones
+        window.openPasswordModal = openPasswordModal;
+        window.closePasswordModal = closePasswordModal;
+        window.validateExamPassword = validateExamPassword;
+        window.logout = logout;
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>

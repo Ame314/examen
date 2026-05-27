@@ -33,6 +33,33 @@ let mainWindow;
 // Obtener todos los datos (Vista necesita poblar las pantallas)
 ipcMain.handle('db-get', () => examController.getAllData());
 
+// Verificar login de usuarios
+ipcMain.handle('verify-login', (event, { username, password }) => {
+    return db.verifyLogin(username, password);
+});
+
+// CRUD de exámenes
+ipcMain.handle('add-exam', (event, exam) => {
+    return db.saveExam(exam);
+});
+
+ipcMain.handle('update-exam', (event, { examId, updatedData }) => {
+    return db.updateExam(examId, updatedData);
+});
+
+ipcMain.handle('delete-exam', (event, examId) => {
+    return db.deleteExam(examId);
+});
+
+// CRUD de usuarios
+ipcMain.handle('add-user', (event, user) => {
+    return db.saveUser(user);
+});
+
+ipcMain.handle('delete-user', (event, userId) => {
+    return db.deleteUser(userId);
+});
+
 // Añadir pregunta (delegado al ExamController con validación)
 ipcMain.handle('add-question', (event, question) => {
     return examController.addQuestion(question);

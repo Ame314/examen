@@ -70,3 +70,22 @@ El diseño del Sistema de Examen Seguro ha sido fundamentado en la familia de no
 1. **Independencia del Color:** Ningún mensaje crítico confía únicamente en el color. Los errores ("Contraseña incorrecta") se muestran explícitamente mediante texto visible y no solo cambiando un borde a rojo.
 2. **Flexibilidad de Entrada:** El modal de salida permite la validación tanto por clic del mouse (botón "Salir") como por la pulsación de la tecla `Enter`, acomodando distintos estilos de interacción y necesidades motoras.
 3. **Manejo de Errores Claro:** Los mensajes informan de manera exacta qué sucedió y cómo resolverlo (Ej: "Por favor ingresa tu nombre", alertando inmediatamente sobre omisiones antes de avanzar).
+
+## 3. Instrucciones de Ejecución
+
+El sistema soporta una ejecución fluida bajo dos modalidades gracias a su arquitectura desacoplada:
+
+### Modo Escritorio (Electron LockDown)
+Para iniciar la aplicación local en modo quiosco de seguridad restringida:
+```bash
+npm install
+npm start
+```
+*Características:* Pantalla completa inamovible, desactivación de portapapeles, deshabilitación de atajos de sistema (Alt+Tab, Ctrl+W) y bloqueo de inspector de código.
+
+### Modo Web Fallback
+Para iniciar el entorno web e interactuar directamente con Firestore a través del navegador:
+```bash
+npm run web
+```
+*Características:* Corre un servidor HTTP local en `http://localhost:8080` para evitar los bloqueos de seguridad del navegador al cargar módulos de Javascript locales (`ES Modules` vía protocolo `file://`).

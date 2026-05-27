@@ -58,12 +58,22 @@ cd /ruta/a/la/carpeta/del/proyecto
 npm install
 ```
 
-### Ejecutar el Navegador Seguro
+### Ejecutar el Navegador Seguro (Escritorio)
 Una vez que las dependencias están instaladas, basta con ejecutar:
 ```bash
 npm start
 ```
-La aplicación se abrirá, bloqueando la pantalla y permitiéndote entrar al examen de prueba.
+La aplicación se abrirá en modo escritorio nativo (Electron), bloqueando la pantalla y permitiéndote entrar al examen seguro.
+
+### Ejecutar la Versión Web
+Para iniciar y probar la aplicación en cualquier navegador web moderno, ejecuta:
+```bash
+npm run web
+```
+Este comando levantará un servidor local ligero y abrirá el proyecto en `http://localhost:8080`. 
+
+> [!NOTE]
+> Debido a que el proyecto utiliza módulos de JavaScript nativos (`ES Modules`), abrir el archivo `index.html` directamente haciendo doble clic desde el explorador de archivos fallará debido a las políticas de seguridad de CORS de los navegadores. Siempre se debe utilizar un servidor local (como el provisto por `npm run web`).
 
 ### Cerrar la Aplicación
 Para cerrar el programa:
