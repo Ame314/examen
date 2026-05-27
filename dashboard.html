@@ -123,6 +123,29 @@
                 <!-- Dinámico -->
             </div>
         </section>
+
+        <section aria-labelledby="grades-section-title" style="margin-top: var(--space-2xl); margin-bottom: var(--space-xl);">
+            <div class="flex justify-between items-center mb-lg">
+                <h2 id="grades-section-title" style="color: var(--primary-700); margin: 0;">Mi Historial de Calificaciones</h2>
+            </div>
+            <div class="card">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Examen</th>
+                                <th>Calificación</th>
+                                <th>Fecha de Finalización</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-grades-table">
+                            <!-- Dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Modal para ingresar contraseña del examen -->
@@ -251,6 +274,46 @@
                     </div>
                 `;
             }
+
+            renderGradesTable(studentResults);
+        }
+
+        function renderGradesTable(studentResults) {
+            const tbody = document.getElementById('student-grades-table');
+            tbody.innerHTML = '';
+
+            if (studentResults.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted" style="padding: var(--space-lg);">Aún no has rendido ninguna evaluación.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Sort results by completedAt descending
+            const sortedResults = [...studentResults].sort((a, b) => {
+                const dateA = a.completedAt ? new Date(a.completedAt) : new Date(0);
+                const dateB = b.completedAt ? new Date(b.completedAt) : new Date(0);
+                return dateB - dateA;
+            });
+
+            sortedResults.forEach(r => {
+                const dateStr = r.completedAt ? new Date(r.completedAt).toLocaleString() : 'N/A';
+                const isZero = r.score === 0;
+                const statusBadge = isZero 
+                    ? '<span class="badge badge--danger">Anulado / Fraude</span>' 
+                    : '<span class="badge badge--success">Completado</span>';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${r.examTitle || 'Examen'}</strong></td>
+                        <td><span class="badge ${isZero ? 'badge--danger' : 'badge--success'}" style="font-size: var(--text-sm); font-weight: 700;">${r.score} pts</span></td>
+                        <td>${dateStr}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
         }
 
         function openPasswordModal(examId) {

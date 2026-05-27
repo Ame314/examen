@@ -227,23 +227,8 @@
                     <span class="badge badge--success" id="results-count">0 Calificados</span>
                 </div>
 
-                <div class="card card-scrollable">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Alumno</th>
-                                    <th>Examen</th>
-                                    <th>Nota Test</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="students-table" aria-live="polite">
-                                <!-- Dinámico -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div id="results-accordion-container" class="card-scrollable">
+                    <!-- Dinámico -->
                 </div>
             </section>
 
@@ -530,45 +515,119 @@
         // ─── RENDERS ─────────────────────────────────────────────────
         
         function renderResults() {
-            const tbody = document.getElementById('students-table');
+            const container = document.getElementById('results-accordion-container');
             const resultsCount = document.getElementById('results-count');
-            tbody.innerHTML = '';
+            container.innerHTML = '';
             
             if(!db.students) db.students = [];
-            
-            // Sort by examTitle (alphabetical ascending) and completedAt (date descending)
-            const sortedStudents = [...db.students].sort((a, b) => {
-                const titleA = (a.examTitle || 'Historia Básica').toLowerCase();
-                const titleB = (b.examTitle || 'Historia Básica').toLowerCase();
-                const compTitle = titleA.localeCompare(titleB);
-                if (compTitle !== 0) return compTitle;
-                
-                const dateA = a.completedAt ? new Date(a.completedAt) : new Date(0);
-                const dateB = b.completedAt ? new Date(b.completedAt) : new Date(0);
-                return dateB - dateA;
-            });
-
-            sortedStudents.forEach(s => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${s.name}</strong></td>
-                        <td>${s.examTitle || 'Historia Básica'}</td>
-                        <td><span class="badge badge--success">${s.score} pts</span></td>
-                        <td>${s.completedAt ? new Date(s.completedAt).toLocaleString() : 'N/A'}</td>
-                        <td>
-                            <button class="btn btn--secondary" style="padding: 4px 10px; font-size: var(--text-xs);" onclick="openEditModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.score})">
-                                Corregir
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
+            if(!db.exams) db.exams = [];
             
             resultsCount.textContent = `${db.students.length} Calificados`;
             
             if(db.students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No se registran exámenes entregados aún.</td></tr>';
+                container.innerHTML = `
+                    <div class="card text-center" style="padding: var(--space-2xl);">
+                        <p class="text-muted" style="margin: 0;">No se registran exámenes entregados aún.</p>
+                    </div>
+                `;
+                return;
             }
+
+            // Group students by examId
+            const groups = {};
+            
+            // First pass: create groups for existing exams
+            db.exams.forEach(exam => {
+                groups[exam.id] = {
+                    examTitle: exam.title,
+                    students: []
+                };
+            });
+
+            // Second pass: place students in their respective groups
+            db.students.forEach(s => {
+                const examId = s.examId || 'unknown';
+                if (!groups[examId]) {
+                    groups[examId] = {
+                        examTitle: s.examTitle || 'Historia Básica',
+                        students: []
+                    };
+                }
+                groups[examId].students.push(s);
+            });
+
+            // Sort exam groups alphabetically by title
+            const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+                return groups[a].examTitle.localeCompare(groups[b].examTitle);
+            });
+
+            // Render each group that has students
+            let accordionIndex = 0;
+            sortedGroupKeys.forEach(examId => {
+                const group = groups[examId];
+                if (group.students.length === 0) return; // Only show exams that have submissions
+                
+                // Sort students inside the group by completedAt descending
+                group.students.sort((a, b) => {
+                    const dateA = a.completedAt ? new Date(a.completedAt) : new Date(0);
+                    const dateB = b.completedAt ? new Date(b.completedAt) : new Date(0);
+                    return dateB - dateA;
+                });
+
+                const totalScore = group.students.reduce((sum, s) => sum + (s.score || 0), 0);
+                const avgScore = (totalScore / group.students.length).toFixed(1);
+                
+                let studentsRowsHtml = '';
+                group.students.forEach(s => {
+                    studentsRowsHtml += `
+                        <tr>
+                            <td><strong>${s.name}</strong></td>
+                            <td><span class="badge badge--success">${s.score} pts</span></td>
+                            <td>${s.completedAt ? new Date(s.completedAt).toLocaleString() : 'N/A'}</td>
+                            <td>
+                                <button class="btn btn--secondary" style="padding: 4px 10px; font-size: var(--text-xs);" onclick="openEditModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.score})">
+                                    Corregir
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                accordionIndex++;
+                const accId = `acc-${accordionIndex}`;
+
+                container.innerHTML += `
+                    <div class="card exam-accordion-card mb-md animate-fadeIn" style="padding: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); background: var(--bg-surface); margin-bottom: var(--space-md);">
+                        <button class="accordion-header w-full flex justify-between items-center" onclick="toggleAccordion('${accId}')" style="background: rgba(255,255,255,0.02); border: none; padding: var(--space-md) var(--space-lg); text-align: left; cursor: pointer; color: white; display: flex; width: 100%; transition: background var(--transition-fast);">
+                            <div class="flex items-center gap-md">
+                                <span class="chevron-icon" id="chevron-${accId}" style="transition: transform var(--transition-fast); display: inline-block; font-size: 0.8rem; margin-right: var(--space-sm);">▶</span>
+                                <h3 style="margin: 0; font-size: var(--text-base); color: var(--primary-700);">${group.examTitle}</h3>
+                            </div>
+                            <div class="flex items-center gap-md">
+                                <span class="badge badge--info">${group.students.length} Calificados</span>
+                                <span class="badge badge--success">Promedio: ${avgScore} pts</span>
+                            </div>
+                        </button>
+                        <div class="accordion-content" id="content-${accId}" style="display: none; padding: var(--space-md) var(--space-lg); border-top: 1px solid rgba(255, 255, 255, 0.05); background: rgba(12, 8, 30, 0.3);">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Nota Test</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${studentsRowsHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         function renderExams() {
@@ -972,6 +1031,20 @@
             }
         }
 
+        function toggleAccordion(accId) {
+            const content = document.getElementById(`content-${accId}`);
+            const chevron = document.getElementById(`chevron-${accId}`);
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                chevron.style.transform = 'rotate(90deg)';
+                chevron.style.color = 'var(--primary-400)';
+            } else {
+                content.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+                chevron.style.color = '';
+            }
+        }
+
         // Exponer al scope global para botones inline
         window.switchTab = switchTab;
         window.saveExam = saveExam;
@@ -989,6 +1062,7 @@
         window.closeEditModal = closeEditModal;
         window.saveStudentEdit = saveStudentEdit;
         window.exitAdmin = exitAdmin;
+        window.toggleAccordion = toggleAccordion;
 
         // Init
         loadData();

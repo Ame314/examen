@@ -382,6 +382,13 @@
                     alertOverlay.style.display = 'none';
                 }
             });
+
+            api.onFraudConfirmed(() => {
+                alertOverlay.style.display = 'none';
+                if (browserView.contentWindow && typeof browserView.contentWindow.triggerFraudBlock === 'function') {
+                    browserView.contentWindow.triggerFraudBlock();
+                }
+            });
         }
 
         // Bloqueos de seguridad globales

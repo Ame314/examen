@@ -196,12 +196,7 @@ function createWindow() {
 
         blurTimeout = setTimeout(() => {
             guardarEnBDD('FRAUDE_DETECTADO', 'El alumno estuvo fuera de la pantalla por más de 5 segundos. Examen cancelado.');
-            mainWindow.webContents.send('show-alert', 'FRAUDE DETECTADO. Examen Cancelado.');
-
-            setTimeout(() => {
-                app.isQuitting = true;
-                app.quit();
-            }, 2000);
+            mainWindow.webContents.send('fraud-confirmed');
         }, 5000);
     });
 

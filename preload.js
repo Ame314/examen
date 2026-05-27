@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     verifyExit: (password) => ipcRenderer.invoke('verify-exit', password),
     onShowExitDialog: (callback) => ipcRenderer.on('show-exit-dialog', () => callback()),
     onShowAlert: (callback) => ipcRenderer.on('show-alert', (_event, message) => callback(message)),
+    onFraudConfirmed: (callback) => ipcRenderer.on('fraud-confirmed', () => callback()),
     
     // Autenticación de usuarios
     verifyLogin: (username, password) => ipcRenderer.invoke('verify-login', { username, password }),

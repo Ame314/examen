@@ -359,8 +359,7 @@
                     await addLogWeb('EXAMEN_ENTREGADO', `[${studentName}] Entregó el examen: ${exam.title}. Calificación: ${score} pts. (modo web)`);
                 }
 
-                alert(`Examen enviado con éxito!\n\nEstudiante: ${studentName}\nCalificación (test): ${score} puntos.\nEl profesor revisará tu ensayo a la brevedad.`);
-                returnToDashboard();
+                showCompletionScreen(score);
 
             } catch(e) {
                 console.error("Error al entregar examen:", e);
@@ -384,6 +383,7 @@
         window.finishExam = finishExam;
         window.abandonExam = abandonExam;
         window.returnToDashboard = returnToDashboard;
+        window.triggerFraudBlock = triggerFraudBlock;
 
         // Init
         initExam();
@@ -437,8 +437,8 @@
                 blurTimeoutWeb = null;
             }
 
-            // Deshabilitar todos los inputs
-            const inputs = document.querySelectorAll('input, textarea, button');
+            // Deshabilitar todos los inputs del formulario
+            const inputs = document.querySelectorAll('#exam-form input, #exam-form textarea, #exam-form button');
             inputs.forEach(i => i.disabled = true);
 
             if (!alertDiv) {
@@ -469,6 +469,47 @@
                         </div>
                     </div>
                     <button class="btn btn--secondary btn--lg w-full justify-center" onclick="returnToDashboard()" style="opacity: 1 !important; cursor: pointer !important; background: var(--primary-600); border: none;">
+                        Volver al Panel de Exámenes
+                    </button>
+                </div>
+            `;
+            alertDiv.style.display = 'flex';
+        }
+
+        function showCompletionScreen(score) {
+            // Deshabilitar todos los inputs del formulario
+            const inputs = document.querySelectorAll('#exam-form input, #exam-form textarea, #exam-form button');
+            inputs.forEach(i => i.disabled = true);
+
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                document.body.appendChild(alertDiv);
+            }
+
+            alertDiv.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(12, 8, 30, 0.98);
+                display: flex; flex-direction: column;
+                align-items: center; justify-content: center;
+                z-index: 99999; color: white; text-align: center; padding: var(--space-xl);
+                font-family: 'Inter', sans-serif;
+            `;
+
+            alertDiv.innerHTML = `
+                <div class="card animate-slideUp" style="max-width: 520px; width: 90%; background: #140f2d; border: 1px solid rgba(139, 92, 246, 0.2); text-align: center; padding: var(--space-2xl);">
+                    <div style="font-size: 3rem; color: var(--success-icon); margin-bottom: var(--space-sm);">✓</div>
+                    <h1 style="color: #ffffff; font-size: 2.2rem; margin-bottom: var(--space-md); font-weight: 800;">¡EXAMEN ENTREGADO!</h1>
+                    <p style="color: var(--text-secondary); font-size: var(--text-base); margin-bottom: var(--space-lg); line-height: 1.5;">
+                        Tu evaluación ha sido guardada y registrada con éxito en el sistema.
+                    </p>
+                    <div class="alert alert--success mb-lg" style="justify-content: center; background: var(--success-bg); border-color: rgba(16, 185, 129, 0.3);">
+                        <div class="alert__content" style="flex: initial;">
+                            <div class="alert__title" style="font-size: var(--text-lg); margin-bottom: 0; color: var(--success-text);">
+                                Calificación Obtenida: <strong>${score} Puntos</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn--primary btn--lg w-full justify-center" onclick="returnToDashboard()" style="background: var(--primary-600); border: none;">
                         Volver al Panel de Exámenes
                     </button>
                 </div>
